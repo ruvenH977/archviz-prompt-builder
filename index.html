@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archviz Prompt Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  @font-face { font-family:'Volte'; src:url('https://www.marty-designhaus.ch/typo3conf/ext/bootup/Resources/Public/Fonts/Volte/Volte-Regular.woff') format('woff'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Volte'; src:url('https://www.marty-designhaus.ch/typo3conf/ext/bootup/Resources/Public/Fonts/Volte/Volte-Medium.woff') format('woff'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'Volte'; src:url('https://www.marty-designhaus.ch/typo3conf/ext/bootup/Resources/Public/Fonts/Volte/Volte-Semibold.woff') format('woff'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'Volte'; src:url('https://www.marty-designhaus.ch/typo3conf/ext/bootup/Resources/Public/Fonts/Volte/Volte-Bold.woff') format('woff'); font-weight:700; font-display:swap; }
+
+  :root{
+    --bg:#2b2a29; --bg-panel:#393737; --bg-panel-hover:#464343; --bg-sunken:#302e2d;
+    --copper:#a3775c; --copper-bright:#c7a688; --copper-deep:#725340;
+    --white:#f1ece7; --stone:#9a938d; --line:#3f3d3c; --focus:#c7a688;
+    --font-display:'Volte','Archivo Expanded','Arial Narrow',sans-serif;
+    --font-body:'Work Sans',-apple-system,'Segoe UI',sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+  html{height:100%}
+  body{
+    height:100%;overflow:hidden;display:flex;flex-direction:column;font-size:14px;line-height:1.55;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 12% -10%, rgba(163,119,92,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 110%, rgba(163,119,92,0.07), transparent 60%);
+    background-attachment:fixed;
+  }
+  ::selection{background:var(--copper-deep);color:var(--white)}
+
+  /* ---------------- header ---------------- */
+  header{
+    padding:clamp(22px,3.4vw,40px) clamp(18px,4vw,48px) 0;
+    max-width:1760px;width:100%;margin:0 auto;
+  }
+  .wordmark{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  .wordmark .logo{height:24px;width:auto;display:block}
+  h1{
+    font-family:var(--font-display);font-weight:700;
+    font-size:clamp(24px,3vw,42px);line-height:1.02;margin:0;
+    color:var(--copper);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance;
+  }
+
+  /* ---------------- layout ---------------- */
+  .app{
+    flex:1;min-height:0;
+    max-width:1760px;width:100%;margin:0 auto;
+    padding:clamp(18px,2.4vw,28px) clamp(18px,4vw,48px) 0;
+    display:grid;gap:16px;overflow:hidden;
+    grid-template-columns:340px minmax(0,1.3fr) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr);
+  }
+  .panel{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);
+    display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  }
+  .panel-head{
+    padding:14px 18px 12px;border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:10px;flex:none;
+  }
+  .panel-head h2{
+    margin:0;font-family:var(--font-display);font-weight:700;font-size:11.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--copper);
+  }
+  .panel-head .count{font-size:11px;color:var(--stone);letter-spacing:.03em;margin-left:auto}
+  .panel-body{padding:16px 18px;overflow-y:auto;flex:1;min-height:0}
+  .panel-body::-webkit-scrollbar{width:9px}
+  .panel-body::-webkit-scrollbar-track{background:transparent}
+  .panel-body::-webkit-scrollbar-thumb{background:#4d4a48;border-radius:99px;border:2px solid var(--bg-panel)}
+  .panel-body::-webkit-scrollbar-thumb:hover{background:var(--copper-deep)}
+
+  /* ---------------- setup column ---------------- */
+  .eyebrow{
+    font-family:var(--font-display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--copper);font-weight:700;
+  }
+  .group{margin-bottom:24px}
+  .group:last-child{margin-bottom:0}
+  .group-head{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding-bottom:7px;border-bottom:1px solid var(--line);margin-bottom:8px;
+  }
+  .mini-btn{
+    background:none;border:none;color:var(--stone);cursor:pointer;font-family:var(--font-body);
+    font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:4px;
+    transition:color .18s ease,background .18s ease;
+  }
+  .mini-btn:hover{color:var(--copper-bright);background:var(--bg-panel-hover)}
+  .mini-btn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+
+  label.check{
+    display:flex;align-items:flex-start;gap:10px;padding:6px 8px;margin:0 -8px;
+    border-radius:6px;cursor:pointer;user-select:none;transition:background .16s ease;
+  }
+  label.check:hover{background:var(--bg-panel-hover)}
+  label.check input{
+    appearance:none;-webkit-appearance:none;flex:none;
+    width:15px;height:15px;margin:3px 0 0;
+    border:1.5px solid #575351;border-radius:3px;background:var(--bg-sunken);
+    cursor:pointer;position:relative;transition:background .15s ease,border-color .15s ease;
+  }
+  label.check input:hover{border-color:var(--copper-deep)}
+  label.check input:checked{background:var(--copper);border-color:var(--copper)}
+  label.check input:checked::after{
+    content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;
+    border:solid var(--bg);border-width:0 2px 2px 0;transform:rotate(43deg);
+  }
+  label.check input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  label.check span{font-size:13px;color:var(--white)}
+
+  .fixed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+  .fixed-list li{
+    display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--stone);
+    padding:5px 8px;margin:0 -8px;cursor:pointer;border-radius:6px;
+    transition:color .16s ease,background .16s ease;
+  }
+  .fixed-list li:hover{background:var(--bg-panel-hover);color:var(--copper-bright)}
+  .fixed-list li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--copper);flex:none}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;padding-top:6px}
+  .chip{
+    border:1px solid var(--line);background:var(--bg-sunken);color:var(--stone);
+    padding:5px 12px;border-radius:999px;font-size:12px;cursor:pointer;
+    font-family:var(--font-body);transition:all .16s ease;
+  }
+  .chip:hover{border-color:var(--copper-deep);color:var(--white)}
+  .chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .chip.on{background:var(--copper-deep);border-color:var(--copper);color:var(--white)}
+
+  .field label{display:block;margin-bottom:5px}
+  .field input[type=text]{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;
+    font-family:var(--font-body);font-size:13px;background:var(--bg-sunken);color:var(--white);
+    transition:border-color .16s ease,box-shadow .16s ease;
+  }
+  .field input[type=text]:focus{outline:none;border-color:var(--copper);box-shadow:0 0 0 3px rgba(163,119,92,.18)}
+
+  .actions{
+    flex:none;padding:14px 18px;border-top:1px solid var(--line);background:var(--bg-panel);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .btn{
+    width:100%;padding:12px 14px;border-radius:6px;cursor:pointer;
+    font-family:var(--font-display);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;border:1px solid transparent;transition:all .18s ease;
+  }
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btn-primary{background:var(--copper);color:#241f1c}
+  .btn-primary:hover{background:var(--copper-bright)}
+  .btn-primary:active{transform:scale(.99)}
+  .btn-secondary{background:var(--bg-sunken);color:var(--white);border-color:var(--line)}
+  .btn-secondary:hover{background:var(--bg-panel-hover);border-color:var(--copper-deep)}
+  .btn-ghost{
+    background:none;border:none;color:var(--stone);font-family:var(--font-body);
+    text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;padding:2px;
+  }
+  .btn-ghost:hover{color:var(--copper-bright)}
+
+  /* ---------------- blocks ---------------- */
+  .block{
+    background:var(--bg-sunken);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:12px;overflow:hidden;transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  .block:last-child{margin-bottom:0}
+  .block:hover{border-color:#4a4644}
+  .block-head{display:flex;align-items:center;gap:10px;padding:11px 14px}
+  .block-head .num{
+    font-family:var(--font-display);font-size:10.5px;font-weight:700;color:var(--copper-bright);
+    background:var(--copper-deep);width:20px;height:20px;border-radius:4px;
+    display:grid;place-items:center;flex:none;font-variant-numeric:tabular-nums;
+  }
+  .block-head h3{
+    margin:0;font-family:var(--font-display);font-weight:700;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--white);
+  }
+  .block-head .tag{
+    margin-left:auto;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--stone);border:1px solid var(--line);padding:2px 9px;border-radius:999px;flex:none;
+  }
+  .block-head .tag.active{color:var(--copper-bright);border-color:var(--copper-deep)}
+  .block-body{padding:0 14px 12px}
+
+  .item{padding:10px 0;border-top:1px solid var(--line)}
+  .item:first-child{border-top:none;padding-top:2px}
+  .item-head{display:flex;align-items:center;gap:9px;margin-bottom:6px;min-height:20px}
+  .item-head .name{
+    font-family:var(--font-display);font-size:10.5px;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--copper);
+  }
+  .item-head .spacer{flex:1}
+  .edited{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone)}
+  textarea{
+    width:100%;border:1px solid var(--line);border-radius:6px;padding:9px 11px;
+    font-family:var(--font-body);font-size:13px;line-height:1.5;color:var(--white);
+    background:var(--bg);resize:vertical;min-height:52px;overflow:hidden;
+    transition:border-color .16s ease,box-shadow .16s ease;
+  }
+  textarea:focus{outline:none;border-color:var(--copper);box-shadow:0 0 0 3px rgba(163,119,92,.18)}
+  textarea::placeholder{color:#6d6663}
+  .empty{color:var(--stone);font-size:12.5px;font-style:italic;padding:2px 0 4px}
+
+  /* ---------------- output ---------------- */
+  .out-opts{display:flex;flex-wrap:wrap;gap:2px 16px;margin-bottom:12px}
+  .out-opts label.check{padding:4px 0;margin:0}
+  .out-opts label.check:hover{background:none}
+  .out-opts label.check span{color:var(--stone);font-size:12.5px}
+  .stats{display:flex;gap:16px;margin-bottom:12px;font-size:11px;color:var(--stone);letter-spacing:.05em}
+  .stats b{color:var(--copper-bright);font-weight:600;font-variant-numeric:tabular-nums}
+  pre#final{
+    background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin:0;white-space:pre-wrap;word-wrap:break-word;
+    font-family:var(--font-mono);font-size:12px;line-height:1.7;color:#ddd6d0;
+  }
+
+  /* ---------------- footer / toast ---------------- */
+  footer{
+    padding:16px clamp(18px,4vw,48px) clamp(18px,2.6vw,28px);
+    max-width:1760px;width:100%;margin:0 auto;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  footer .note{font-size:11.5px;color:var(--stone);letter-spacing:.02em}
+  footer .note b{color:var(--copper);font-weight:600}
+  .site-link{color:var(--stone);text-decoration:none;border-bottom:1px solid var(--line);transition:color .2s ease,border-color .2s ease}
+  .site-link:hover,.site-link:focus-visible{color:var(--copper-bright);border-color:var(--copper-bright)}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);
+    background:var(--bg-panel);color:var(--white);padding:11px 20px;border-radius:8px;
+    font-size:12.5px;letter-spacing:.03em;opacity:0;pointer-events:none;
+    transition:opacity .22s ease,transform .22s ease;
+    border:1px solid var(--line);border-left:3px solid var(--copper);
+    box-shadow:0 12px 30px rgba(0,0,0,.35);z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+
+  @media (max-width:1200px){
+    html,body{height:auto;overflow:visible}
+    .app{grid-template-columns:1fr;grid-template-rows:none;overflow:visible;padding-bottom:8px}
+    .panel{overflow:visible}
+    .panel-body{overflow:visible}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 167.62 40.03" aria-label="Marty Designhaus">
+      <g fill="#a3775c">
+        <path d="m154.92,31.57c-.65-.94-1.9-1.63-3.48-1.63-2.07,0-3.53,1.16-3.53,2.8,0,3.36,5.08,2.52,5.08,4.39,0,.69-.59,1.12-1.64,1.12s-1.85-.41-2.46-1.21l-1.34,1.25c.63.95,1.8,1.73,3.77,1.73,2.22,0,3.69-1.25,3.69-3,0-3.39-5.08-2.62-5.08-4.34,0-.57.53-.96,1.43-.96.99,0,1.84.53,2.26,1.13l1.3-1.28Zm-17.11,4.31c0,2.49,1.57,4.15,3.93,4.15s3.97-1.66,3.97-4.15v-5.73h-1.88v5.71c0,1.37-.81,2.28-2.05,2.28s-2.08-.92-2.08-2.29v-5.7h-1.88v5.73Zm-4.91.09h-2.95l1.48-3.83,1.48,3.83Zm1.48,3.84h2.09l-3.89-9.66h-2.2l-3.89,9.66h1.98l.84-2.17h4.24l.83,2.17Zm-11.47,0h1.9v-9.66h-1.9v3.85h-4.6v-3.85h-1.88v9.66h1.88v-4.05h4.6v4.05Z"/>
+        <path d="m165.59,24.74h2.03v-9.66h-1.88v6.62l-4.51-6.62h-2.04v9.66h1.88v-6.54l4.51,6.54Zm-8.73-.84v-3.93h-1.88v2.73c-.48.24-1.04.38-1.63.38-1.78,0-3.09-1.42-3.09-3.15s1.31-3.17,2.97-3.17c.96,0,1.73.38,2.31.88l1.25-1.43c-.81-.81-1.95-1.33-3.57-1.33-2.74,0-4.96,2.26-4.96,5.05s2.14,5.04,4.96,5.04c1.58,0,2.79-.41,3.65-1.06m-12.6.84h1.88v-9.66h-1.88v9.66Zm-2.08-8.25c-.65-.94-1.9-1.63-3.48-1.63-2.07,0-3.53,1.16-3.53,2.8,0,3.36,5.08,2.52,5.08,4.39,0,.69-.59,1.12-1.64,1.12s-1.86-.41-2.46-1.21l-1.34,1.25c.63.95,1.79,1.73,3.77,1.73,2.22,0,3.7-1.25,3.7-3,0-3.39-5.08-2.62-5.08-4.34,0-.57.53-.96,1.43-.96.99,0,1.84.53,2.26,1.13l1.3-1.28Zm-14.99,8.25h6.26v-1.78h-4.37v-2.2h3.77v-1.78h-3.77v-2.14h4.37v-1.76h-6.26v9.66Zm-7.58-7.88c2.08,0,3.45,1.21,3.45,3.04s-1.37,3.06-3.44,3.06h-1.28v-6.11h1.27Zm-3.2,7.88h3.29c3.14,0,5.38-2,5.38-4.81s-2.28-4.85-5.46-4.85h-3.21v9.66Z"/>
+        <path d="m160.37,9.66h1.89v-3.21L165.82,0h-1.99l-2.47,4.46L158.91,0h-2.1l3.56,6.45v3.21Zm-4.25-7.9V0h-7.63v1.76h2.87v7.9h1.88V1.76h2.88Zm-12.51-.11c.99,0,1.64.56,1.64,1.39s-.65,1.4-1.64,1.4h-1.7V1.66h1.7Zm-3.59,8.01h1.88v-3.56h1.39l1.98,3.56h2.19l-2.25-3.85c1.27-.47,2.04-1.45,2.04-2.77C147.24,1.21,145.74,0,143.46,0h-3.44v9.66Zm-5.28-3.85h-2.95l1.48-3.83,1.48,3.83Zm1.48,3.85h2.1L134.43,0h-2.2l-3.89,9.66h1.97l.84-2.17h4.24l.83,2.17Zm-14.7-1.82l3.24-4.9v6.72h1.88V0h-1.93l-3.08,4.79L118.57,0h-2.15v9.66h1.88V2.97l3.23,4.87Z"/>
+        <path d="m48.71.21h-6.12s-1.91,0-1.91,0v5.28h8.15c9.88,0,16.34,5.78,16.34,14.6s-6.46,14.6-16.34,14.6h-6.24s-1.91,0-1.91,0v5.28h1.91s6.68,0,6.68,0c12.92,0,21.87-8.14,21.87-19.88S61.95.21,48.71.21"/>
+        <polygon points="101.57 .12 101.57 9.1 101.57 17.17 81.5 17.17 81.5 9.22 81.5 .28 75.93 .28 75.93 39.91 81.5 39.91 81.5 32.35 81.5 22.73 101.57 22.73 101.57 32.32 101.57 39.91 107.14 39.91 107.14 .12 101.57 .12"/>
+        <polygon points="28.74 .06 17.07 10.25 5.43 .09 0 .09 0 39.96 5.43 39.96 5.42 7.29 17.09 17.54 28.74 7.28 28.74 39.93 34.17 39.93 34.17 .06 28.74 .06"/>
+      </g>
+    </svg>
+  </div>
+  <h1>Archviz Prompt Builder</h1>
+</header>
+
+<div class="app">
+
+  <!-- ============ LEFT : SETUP ============ -->
+  <section class="panel" id="setup">
+    <div class="panel-head"><h2>Setup</h2><span class="count" id="setupCount"></span></div>
+    <div class="panel-body">
+
+      <div class="group field">
+        <label class="eyebrow" for="projectName">Project / file name</label>
+        <input type="text" id="projectName" value="archviz-prompt" spellcheck="false">
+      </div>
+
+      <div class="group">
+        <div class="group-head"><span class="eyebrow">Always included</span></div>
+        <ul class="fixed-list" id="fixedList"></ul>
+      </div>
+
+      <div class="group" id="group-materials"></div>
+      <div class="group" id="group-landscaping"></div>
+
+      <div class="group">
+        <div class="group-head"><span class="eyebrow">Furniture brand reference</span></div>
+        <div class="chips" id="brandChips"></div>
+      </div>
+
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnDownload">Download .txt</button>
+      <button class="btn btn-secondary" id="btnCopy">Copy prompt</button>
+      <button class="btn btn-ghost" id="btnReset">Reset all texts to defaults</button>
+    </div>
+  </section>
+
+  <!-- ============ MIDDLE : BLOCKS ============ -->
+  <section class="panel" id="blocks">
+    <div class="panel-head"><h2>Prompt blocks</h2><span class="count">click a text to edit it</span></div>
+    <div class="panel-body" id="blockList"></div>
+  </section>
+
+  <!-- ============ RIGHT : FINAL PROMPT ============ -->
+  <section class="panel" id="output">
+    <div class="panel-head"><h2>Final prompt</h2></div>
+    <div class="panel-body">
+      <div class="out-opts">
+        <label class="check"><input type="checkbox" id="optHeadings" checked><span>Section headings</span></label>
+        <label class="check"><input type="checkbox" id="optBullets" checked><span>Bullet list for materials</span></label>
+      </div>
+      <div class="stats">
+        <span><b id="statWords">0</b> words</span>
+        <span><b id="statChars">0</b> characters</span>
+      </div>
+      <pre id="final"></pre>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span class="note">Archviz Prompt Builder</span>
+  <span class="note">MDH &middot; <a class="site-link" href="https://www.marty-designhaus.ch/" target="_blank" rel="noopener noreferrer">marty-designhaus.ch</a></span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — all default texts live here. Edit freely.
+   type "fixed"  -> always in the prompt, single text block
+   type "group"  -> checkbox list, each item has its own text block
+   ===================================================================== */
+const INTRO = "Transform this 3D architectural render into a photorealistic photograph of a modern residential house.";
+
+const SECTIONS = [
+  {
+    id: "overall-style", title: "Overall Style", type: "fixed",
+    text: "Photorealistic architectural photography, shot on a full-frame camera with a wide-angle lens, natural color grading, realistic material reflectivity and shadow softness, no CGI look, no oversaturation — resembling a professional real estate / architecture photo shoot."
+  },
+  {
+    id: "lighting", title: "Lighting & Atmosphere", type: "fixed",
+    text: "Overcast sky with soft diffused daylight, slight directional quality so one side of the building has gentle, soft-edged shadows (not harsh sun). The shorter facade sits slightly in shadow."
+  },
+  {
+    id: "color-temperature", title: "Color Temperature", type: "fixed",
+    text: "No warm interior lighting — interiors should read as dim and neutral, glass slightly reflective rather than glowing."
+  },
+  {
+    id: "sky", title: "Sky", type: "fixed",
+    text: "Soft grey-white overcast with a faint hint of blue, realistic cloud diffusion, no dramatic sunset colors."
+  },
+  {
+    id: "materials", title: "Materials", type: "group",
+    items: [
+      { id:"asphalt",       label:"Asphalt",                  text:"fine-grained dark grey asphalt, matte and slightly worn, realistic aggregate texture with subtle tonal variation, no visible seams" },
+      { id:"concrete",      label:"Concrete",                 text:"fair-faced concrete with fine formwork texture, neutral grey, matte finish, subtle cloudy variation and crisp clean edges" },
+      { id:"retaining",     label:"Concrete Retaining Wall",  text:"board-formed exposed concrete, subtle formwork lines, neutral grey, slight natural weathering towards the base" },
+      { id:"floor-terrace", label:"Flooring Terrace",         text:"large-format grey stone slabs, matte surface, narrow even joints, realistic micro-texture and soft contact shadows" },
+      { id:"floor-drive",   label:"Flooring Driveway",        text:"light grey concrete pavers in a regular bond, matte, fine joints, subtle color variation between individual units" },
+      { id:"embankment",    label:"Embankment Stone",         text:"natural quarried stone blocks with irregular faces, grey-beige tones, dry-stacked look with realistic gaps and shadows" },
+      { id:"roof-tiles",    label:"Roof Tiles",               text:"anthracite clay roof tiles, matte, regular coursing, realistic depth and shadow between the rows" },
+      { id:"win-frame",     label:"Windows Frame",            text:"slim dark anthracite metal frames, matte powder-coated finish, crisp shadow lines" },
+      { id:"win-glass",     label:"Windows Glass",            text:"neutral slightly reflective glazing with realistic reflections of sky and surroundings, faint green-grey tint, no glow" },
+      { id:"roof-edge",     label:"Metal Roof Edge",          text:"dark anthracite folded sheet metal trim, matte, precise clean lines with a thin shadow gap" },
+      { id:"railing",       label:"Metal Railing",            text:"slim dark powder-coated steel railing, minimal profile, matte finish" },
+      { id:"pebble",        label:"Pebble",                   text:"rounded grey-beige gravel bed, evenly distributed, realistic scale with small shadows between the stones" },
+      { id:"facade-1",      label:"Facade Color 1",           text:"fine mineral plaster in a warm off-white, matte, subtle surface grain" },
+      { id:"facade-2",      label:"Facade Color 2",           text:"fine mineral plaster in a muted grey-beige, matte, subtle surface grain" }
+    ]
+  },
+  {
+    id: "landscaping", title: "Landscaping", type: "group",
+    items: [
+      { id:"ls-general", label:"General", checked:true, text:"general landscaping should read as a real Central European residential garden, tasteful and minimal" },
+      { id:"ls-lawn",    label:"Lawn",    checked:true, text:"realistic well-maintained residential grass, natural green tone with slight texture variation, subtle mowing lines" },
+      { id:"ls-slope",   label:"Slope",   text:"naturally graded planted embankment with low ground cover and ornamental grasses, even coverage, no bare soil patches" }
+    ]
+  },
+  {
+    id: "outdoor-furniture", title: "Outdoor Furniture", type: "fixed",
+    template: "Modern outdoor furniture on the terrace (chairs, small table, lounge elements){BRANDS}.",
+    brands: ["Dedon","Royal Botania","Minotti","B&B Italia","Gandia Blasco"],
+    activeBrands: ["Dedon","Royal Botania"]
+  },
+  {
+    id: "indoor-furniture", title: "Indoor Furniture", type: "fixed",
+    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."
+  }
+];
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const state = { checked:{}, texts:{}, edited:{}, brands:[] };
+
+function defaultTextFor(key){
+  for(const s of SECTIONS){
+    if(s.type === "fixed" && s.id === key) return s.template ? renderTemplate(s) : s.text;
+    if(s.type === "group"){
+      const it = (s.items||[]).find(i => i.id === key);
+      if(it) return it.text;
+    }
+  }
+  return "";
+}
+
+function renderTemplate(sec){
+  const b = state.brands.length ? ", in the style of " + listJoin(state.brands) : "";
+  return sec.template.replace("{BRANDS}", b);
+}
+
+function listJoin(arr){
+  if(arr.length === 1) return arr[0];
+  return arr.slice(0,-1).join(", ") + " or " + arr[arr.length-1];
+}
+
+function initState(){
+  state.checked = {}; state.texts = {}; state.edited = {};
+  SECTIONS.forEach(s => {
+    if(s.type === "fixed"){
+      if(s.brands) state.brands = [...(s.activeBrands||[])];
+      state.texts[s.id] = s.template ? renderTemplate(s) : s.text;
+    } else {
+      s.items.forEach(i => {
+        state.checked[i.id] = !!i.checked;
+        state.texts[i.id] = i.text;
+      });
+    }
+  });
+  state.texts.__intro = INTRO;
+}
+
+/* =====================================================================
+   SETUP COLUMN
+   ===================================================================== */
+function buildSetup(){
+  const ul = document.getElementById("fixedList");
+  ul.innerHTML = "";
+  SECTIONS.filter(s => s.type === "fixed").forEach(s => {
+    const li = document.createElement("li");
+    li.textContent = s.title;
+    li.title = "Jump to this block";
+    li.onclick = () => {
+      const el = document.getElementById("block-" + s.id);
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      el.style.borderColor = "var(--copper)";
+      el.style.boxShadow = "0 0 0 3px rgba(163,119,92,.18)";
+      setTimeout(() => { el.style.borderColor = ""; el.style.boxShadow = ""; }, 1000);
+    };
+    ul.appendChild(li);
+  });
+
+  SECTIONS.filter(s => s.type === "group").forEach(s => {
+    const host = document.getElementById("group-" + s.id);
+    host.innerHTML = "";
+
+    const head = document.createElement("div");
+    head.className = "group-head";
+    const t = document.createElement("span");
+    t.className = "eyebrow"; t.textContent = s.title;
+    const btn = document.createElement("button");
+    btn.className = "mini-btn"; btn.textContent = "All / none";
+    btn.onclick = () => {
+      const anyOff = s.items.some(i => !state.checked[i.id]);
+      s.items.forEach(i => state.checked[i.id] = anyOff);
+      buildSetup(); buildBlocks(); update();
+    };
+    head.appendChild(t); head.appendChild(btn);
+    host.appendChild(head);
+
+    s.items.forEach(i => {
+      const lab = document.createElement("label");
+      lab.className = "check";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!state.checked[i.id];
+      cb.onchange = () => { state.checked[i.id] = cb.checked; buildBlocks(); update(); };
+      const sp = document.createElement("span");
+      sp.textContent = i.label;
+      lab.appendChild(cb); lab.appendChild(sp);
+      host.appendChild(lab);
+    });
+  });
+
+  const sec = SECTIONS.find(s => s.brands);
+  const wrap = document.getElementById("brandChips");
+  wrap.innerHTML = "";
+  sec.brands.forEach(b => {
+    const c = document.createElement("button");
+    c.className = "chip" + (state.brands.includes(b) ? " on" : "");
+    c.textContent = b;
+    c.setAttribute("aria-pressed", state.brands.includes(b));
+    c.onclick = () => {
+      const idx = state.brands.indexOf(b);
+      if(idx > -1) state.brands.splice(idx,1); else state.brands.push(b);
+      if(!state.edited[sec.id]) state.texts[sec.id] = renderTemplate(sec);
+      buildSetup(); buildBlocks(); update();
+    };
+    wrap.appendChild(c);
+  });
+
+  const total = SECTIONS.filter(s => s.type === "group")
+    .reduce((n,s) => n + s.items.filter(i => state.checked[i.id]).length, 0);
+  document.getElementById("setupCount").textContent = total + " optional selected";
+}
+
+/* =====================================================================
+   BLOCK COLUMN
+   ===================================================================== */
+function autoGrow(ta){
+  ta.style.height = "auto";
+  ta.style.height = (ta.scrollHeight + 2) + "px";
+}
+
+function makeTextarea(key){
+  const ta = document.createElement("textarea");
+  ta.value = state.texts[key] || "";
+  ta.rows = 2;
+  ta.oninput = () => {
+    state.texts[key] = ta.value;
+    state.edited[key] = ta.value !== defaultTextFor(key);
+    autoGrow(ta); update();
+  };
+  requestAnimationFrame(() => autoGrow(ta));
+  return ta;
+}
+
+function resetButton(key){
+  const b = document.createElement("button");
+  b.className = "mini-btn"; b.textContent = "Reset";
+  b.onclick = () => {
+    state.texts[key] = defaultTextFor(key);
+    state.edited[key] = false;
+    buildBlocks(); update();
+  };
+  return b;
+}
+
+function buildBlocks(){
+  const host = document.getElementById("blockList");
+  host.innerHTML = "";
+
+  // opening line
+  const box0 = document.createElement("div");
+  box0.className = "block"; box0.id = "block-intro";
+  const h0 = document.createElement("div");
+  h0.className = "block-head";
+  h0.innerHTML = '<div class="num">0</div><h3>Opening line</h3><div class="tag">always</div>';
+  const b0 = document.createElement("div");
+  b0.className = "block-body";
+  const ta0 = document.createElement("textarea");
+  ta0.value = state.texts.__intro;
+  ta0.oninput = () => { state.texts.__intro = ta0.value; autoGrow(ta0); update(); };
+  requestAnimationFrame(() => autoGrow(ta0));
+  b0.appendChild(ta0);
+  box0.appendChild(h0); box0.appendChild(b0);
+  host.appendChild(box0);
+
+  let n = 0;
+  SECTIONS.forEach(sec => {
+    const active = sec.type === "fixed" ? true : sec.items.filter(i => state.checked[i.id]);
+    n++;
+
+    const box = document.createElement("div");
+    box.className = "block"; box.id = "block-" + sec.id;
+
+    const head = document.createElement("div");
+    head.className = "block-head";
+    head.innerHTML = '<div class="num">' + n + '</div><h3>' + sec.title + '</h3>';
+    const tag = document.createElement("div");
+    tag.className = "tag" + (sec.type === "group" && active.length ? " active" : "");
+    tag.textContent = sec.type === "fixed" ? "always" : active.length + " selected";
+    head.appendChild(tag);
+    box.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "block-body";
+
+    if(sec.type === "fixed"){
+      if(state.edited[sec.id]){
+        const e = document.createElement("span"); e.className = "edited"; e.textContent = "edited";
+        head.appendChild(e);
+      }
+      head.appendChild(resetButton(sec.id));
+      body.appendChild(makeTextarea(sec.id));
+    } else if(!active.length){
+      const p = document.createElement("div");
+      p.className = "empty";
+      p.textContent = "Nothing selected — this section is left out of the prompt.";
+      body.appendChild(p);
+    } else {
+      active.forEach(i => {
+        const item = document.createElement("div");
+        item.className = "item";
+        const h = document.createElement("div");
+        h.className = "item-head";
+        const nm = document.createElement("div");
+        nm.className = "name"; nm.textContent = i.label;
+        const sp = document.createElement("div"); sp.className = "spacer";
+        h.appendChild(nm); h.appendChild(sp);
+        if(state.edited[i.id]){
+          const e = document.createElement("span"); e.className = "edited"; e.textContent = "edited";
+          h.appendChild(e);
+        }
+        h.appendChild(resetButton(i.id));
+        item.appendChild(h);
+        item.appendChild(makeTextarea(i.id));
+        body.appendChild(item);
+      });
+    }
+
+    box.appendChild(body);
+    host.appendChild(box);
+  });
+}
+
+/* =====================================================================
+   PROMPT ASSEMBLY
+   ===================================================================== */
+function buildPrompt(){
+  const headings = document.getElementById("optHeadings").checked;
+  const bullets  = document.getElementById("optBullets").checked;
+  const parts = [];
+
+  const intro = (state.texts.__intro || "").trim();
+  if(intro) parts.push(intro);
+
+  SECTIONS.forEach(sec => {
+    let bodyText = "";
+    if(sec.type === "fixed"){
+      bodyText = (state.texts[sec.id] || "").trim();
+    } else {
+      const active = sec.items.filter(i => state.checked[i.id] && (state.texts[i.id]||"").trim());
+      if(!active.length) return;
+      bodyText = active.map(i => {
+        const t = (state.texts[i.id] || "").trim();
+        return bullets ? "- " + i.label + ": " + t : i.label + ": " + t;
+      }).join(bullets ? "\n" : " ");
+    }
+    if(!bodyText) return;
+    parts.push(headings ? sec.title.toUpperCase() + "\n" + bodyText : bodyText);
+  });
+
+  return parts.join("\n\n");
+}
+
+function update(){
+  const txt = buildPrompt();
+  document.getElementById("final").textContent = txt;
+  document.getElementById("statChars").textContent = txt.length;
+  document.getElementById("statWords").textContent = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  const total = SECTIONS.filter(s => s.type === "group")
+    .reduce((n,s) => n + s.items.filter(i => state.checked[i.id]).length, 0);
+  document.getElementById("setupCount").textContent = total + " optional selected";
+}
+
+/* =====================================================================
+   ACTIONS
+   ===================================================================== */
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove("show"), 1900);
+}
+
+function fileName(){
+  const raw = (document.getElementById("projectName").value || "archviz-prompt").trim();
+  const slug = raw.toLowerCase().replace(/[^a-z0-9\-_]+/g,"-").replace(/^-+|-+$/g,"") || "archviz-prompt";
+  const d = new Date();
+  const stamp = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  return slug + "_" + stamp + ".txt";
+}
+
+document.getElementById("btnDownload").onclick = () => {
+  const blob = new Blob([buildPrompt()], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = fileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast("Saved as " + fileName());
+};
+
+document.getElementById("btnCopy").onclick = async () => {
+  const txt = buildPrompt();
+  try { await navigator.clipboard.writeText(txt); }
+  catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+  }
+  toast("Prompt copied to clipboard");
+};
+
+document.getElementById("btnReset").onclick = () => {
+  const keep = {...state.checked};
+  initState();
+  state.checked = keep;
+  buildSetup(); buildBlocks(); update();
+  toast("All texts reset to defaults");
+};
+
+document.getElementById("optHeadings").onchange = update;
+document.getElementById("optBullets").onchange = update;
+
+/* ---------------- boot ---------------- */
+initState();
+buildSetup();
+buildBlocks();
+update();
+</script>
+</body>
+</html>
