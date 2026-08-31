@@ -384,12 +384,12 @@
                       whether it starts on)
    type "group"    -> checkbox list, each item has its own text block
    ===================================================================== */
-const INTRO = "Transform this 3D architectural render into a photorealistic photograph of a modern residential house.";
+const INTRO = "transform this 3D architectural render into a photorealistic photograph of a modern residential house.";
 
 const SECTIONS = [
   {
     id: "overall-style", title: "Overall Style", type: "fixed",
-    text: "Photorealistic architectural photography, shot on a full-frame camera with a wide-angle lens, natural color grading, realistic material reflectivity and shadow softness, no CGI look, no oversaturation — resembling a professional real estate / architecture photo shoot."
+    text: "photorealistic architectural photography, shot on a full-frame camera with a wide-angle lens, natural color grading, realistic material reflectivity and shadow softness, no CGI look, no oversaturation — resembling a professional real estate / architecture photo shoot."
   },
   {
     id: "lighting", title: "Lighting & Atmosphere", type: "fixed",
@@ -397,7 +397,7 @@ const SECTIONS = [
   },
   {
     id: "color-temperature", title: "Color Temperature", type: "fixed",
-    text: "No warm interior lighting — interiors should read as dim and neutral, glass slightly reflective rather than glowing."
+    text: "no warm interior lighting — interiors should read as dim and neutral, glass slightly reflective rather than glowing."
   },
   {
     id: "sky", title: "Sky", type: "fixed",
@@ -419,7 +419,9 @@ const SECTIONS = [
       { id:"railing",       label:"Metal Railing",            text:"slim dark powder-coated steel railing (#3A3A3D), minimal profile, matte finish" },
       { id:"pebble",        label:"Pebble",                   text:"rounded grey gravel bed, evenly distributed, realistic scale with small shadows between the stones" },
       { id:"facade-1",      label:"Facade Color 1",           text:"fine mineral plaster (2mm grain) in a white (#FCFCFA), matte, subtle surface grain" },
-      { id:"facade-2",      label:"Facade Color 2",           text:"fine mineral plaster (2mm grain) in a grey (#757572), matte, subtle surface grain" }
+      { id:"facade-2",      label:"Facade Color 2",           text:"fine mineral plaster (2mm grain) in a grey (#757572), matte, subtle surface grain" },
+      { id:"facade-stone-1",  label:"Facade Stone 1",         text:"valser quartzite cladding in narrow split-face strips laid in horizontal courses of random length and slightly varying height, cleft natural surface with shallow relief between the strips, deep narrow shadow joints, cool grey to grey-green stone with fine silver mica flecks that catch the light without gloss, pale white-grey quartz veining and soft cloudy marbling, occasional darker blue-anthracite strips for tonal variation, matte to faintly satin, no polish or reflection" },
+      { id:"facade-stone-2",  label:"Facade Stone 2",         text:"svlser quartzite cladding in narrow split-face strips laid in horizontal courses of random length and slightly varying height, cleft natural surface with shallow relief between the strips, deep narrow shadow joints, warm sand-beige to greige stone with soft ochre and light rust undertones, fine golden mica flecks catching the light without gloss, creamy off-white veining and gentle cloudy marbling, occasional deeper brown-grey strips for tonal variation, matte to faintly satin, no polish or reflection" }
     ],
     custom: true
   },
@@ -433,13 +435,13 @@ const SECTIONS = [
   },
   {
     id: "outdoor-furniture", title: "Outdoor Furniture", type: "fixed",
-    template: "Modern outdoor furniture on the terrace (chairs, small table, lounge elements){BRANDS}.",
+    template: "modern outdoor furniture on the terrace (chairs, small table, lounge elements){BRANDS}.",
     brands: ["Dedon","Royal Botania","Minotti","B&B Italia","Gandia Blasco"],
     activeBrands: ["Dedon","Royal Botania"]
   },
   {
     id: "indoor-furniture", title: "Indoor Furniture", type: "optional", checked: false,
-    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."
+    text: "furniture and styling visible through the glass: modern scandinavian / nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."
   }
 ];
 
