@@ -325,6 +325,7 @@
 
       <div class="group" id="group-materials"></div>
       <div class="group" id="group-landscaping"></div>
+      <div class="group" id="group-optional"></div>
 
       <div class="group">
         <div class="group-head"><span class="eyebrow">Furniture brand reference</span></div>
@@ -378,8 +379,10 @@
 <script>
 /* =====================================================================
    CONFIG — all default texts live here. Edit freely.
-   type "fixed"  -> always in the prompt, single text block
-   type "group"  -> checkbox list, each item has its own text block
+   type "fixed"    -> always in the prompt, single text block
+   type "optional" -> single text block with its own checkbox ("checked" sets
+                      whether it starts on)
+   type "group"    -> checkbox list, each item has its own text block
    ===================================================================== */
 const INTRO = "Transform this 3D architectural render into a photorealistic photograph of a modern residential house.";
 
@@ -435,10 +438,9 @@ const SECTIONS = [
     activeBrands: ["Dedon","Royal Botania"]
   },
   {
-    id: "indoor-furniture", title: "Indoor Furniture", type: "group",
-    items:[
-      { id:"indoor-furniture",  label:"Indoor Furniture",    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."}
-      ]
+    id: "indoor-furniture", title: "Indoor Furniture", type: "optional", checked: false,
+    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."
+  }
 ];
 
 /* =====================================================================
@@ -450,11 +452,18 @@ const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq
    { id, label } — their description text sits in state.texts like every
    other item, so assembly and editing need no special case. */
 function isCustom(id){ return state.custom.some(c => c.id === id); }
+
+/* everything the user can switch on or off: group items plus optional sections */
+function selectedCount(){
+  return SECTIONS.filter(s => s.type === "group")
+           .reduce((a,s) => a + itemsOf(s).filter(i => state.checked[i.id]).length, 0)
+       + SECTIONS.filter(s => s.type === "optional" && state.checked[s.id]).length;
+}
 function itemsOf(sec){ return sec.custom ? sec.items.concat(state.custom) : sec.items; }
 
 function defaultTextFor(key){
   for(const s of SECTIONS){
-    if(s.type === "fixed" && s.id === key) return s.template ? renderTemplate(s) : s.text;
+    if((s.type === "fixed" || s.type === "optional") && s.id === key) return s.template ? renderTemplate(s) : s.text;
     if(s.type === "group"){
       const it = (s.items||[]).find(i => i.id === key);
       if(it) return it.text;
@@ -479,9 +488,10 @@ function initState(){
   state.checked = {}; state.texts = {}; state.edited = {};
   keptCustom.forEach(c => { state.texts[c.id] = c.text; state.checked[c.id] = c.on; });
   SECTIONS.forEach(s => {
-    if(s.type === "fixed"){
+    if(s.type === "fixed" || s.type === "optional"){
       if(s.brands) state.brands = [...(s.activeBrands||[])];
       state.texts[s.id] = s.template ? renderTemplate(s) : s.text;
+      if(s.type === "optional") state.checked[s.id] = !!s.checked;
     } else {
       s.items.forEach(i => {
         state.checked[i.id] = !!i.checked;
@@ -599,6 +609,31 @@ function buildSetup(){
     }
   });
 
+  // optional single-text sections — one checkbox each, no per-item labels
+  const optHost = document.getElementById("group-optional");
+  optHost.innerHTML = "";
+  const optionals = SECTIONS.filter(s => s.type === "optional");
+  if(optionals.length){
+    const oh = document.createElement("div");
+    oh.className = "group-head";
+    const ot = document.createElement("span");
+    ot.className = "eyebrow"; ot.textContent = "Optional sections";
+    oh.appendChild(ot);
+    optHost.appendChild(oh);
+    optionals.forEach(s => {
+      const lab = document.createElement("label");
+      lab.className = "check";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!state.checked[s.id];
+      cb.onchange = () => { state.checked[s.id] = cb.checked; buildBlocks(); update(); };
+      const sp = document.createElement("span");
+      sp.textContent = s.title;
+      lab.appendChild(cb); lab.appendChild(sp);
+      optHost.appendChild(lab);
+    });
+  }
+
   const sec = SECTIONS.find(s => s.brands);
   const wrap = document.getElementById("brandChips");
   wrap.innerHTML = "";
@@ -616,9 +651,7 @@ function buildSetup(){
     wrap.appendChild(c);
   });
 
-  const total = SECTIONS.filter(s => s.type === "group")
-    .reduce((n,s) => n + itemsOf(s).filter(i => state.checked[i.id]).length, 0);
-  document.getElementById("setupCount").textContent = total + " optional selected";
+  document.getElementById("setupCount").textContent = selectedCount() + " optional selected";
 }
 
 /* =====================================================================
@@ -675,7 +708,9 @@ function buildBlocks(){
 
   let n = 0;
   SECTIONS.forEach(sec => {
-    const active = sec.type === "fixed" ? true : itemsOf(sec).filter(i => state.checked[i.id]);
+    const single = sec.type === "fixed" || sec.type === "optional";
+    const optOn  = sec.type !== "optional" || !!state.checked[sec.id];
+    const active = single ? true : itemsOf(sec).filter(i => state.checked[i.id]);
     n++;
 
     const box = document.createElement("div");
@@ -685,15 +720,22 @@ function buildBlocks(){
     head.className = "block-head";
     head.innerHTML = '<div class="num">' + n + '</div><h3>' + sec.title + '</h3>';
     const tag = document.createElement("div");
-    tag.className = "tag" + (sec.type === "group" && active.length ? " active" : "");
-    tag.textContent = sec.type === "fixed" ? "always" : active.length + " selected";
+    tag.className = "tag" + (((sec.type === "group" && active.length) || (sec.type === "optional" && optOn)) ? " active" : "");
+    tag.textContent = sec.type === "fixed"    ? "always"
+                    : sec.type === "optional" ? (optOn ? "included" : "off")
+                    : active.length + " selected";
     head.appendChild(tag);
     box.appendChild(head);
 
     const body = document.createElement("div");
     body.className = "block-body";
 
-    if(sec.type === "fixed"){
+    if(single && !optOn){
+      const p = document.createElement("div");
+      p.className = "empty";
+      p.textContent = "Not included — tick it under Optional sections to add it.";
+      body.appendChild(p);
+    } else if(single){
       if(state.edited[sec.id]){
         const e = document.createElement("span"); e.className = "edited"; e.textContent = "edited";
         head.appendChild(e);
@@ -754,7 +796,8 @@ function buildPrompt(){
 
   SECTIONS.forEach(sec => {
     let bodyText = "";
-    if(sec.type === "fixed"){
+    if(sec.type === "fixed" || sec.type === "optional"){
+      if(sec.type === "optional" && !state.checked[sec.id]) return;
       bodyText = (state.texts[sec.id] || "").trim();
     } else {
       const active = itemsOf(sec).filter(i => state.checked[i.id] && (state.texts[i.id]||"").trim());
@@ -778,9 +821,7 @@ function update(){
   document.getElementById("final").textContent = txt;
   document.getElementById("statChars").textContent = txt.length;
   document.getElementById("statWords").textContent = txt.trim() ? txt.trim().split(/\s+/).length : 0;
-  const total = SECTIONS.filter(s => s.type === "group")
-    .reduce((n,s) => n + itemsOf(s).filter(i => state.checked[i.id]).length, 0);
-  document.getElementById("setupCount").textContent = total + " optional selected";
+  document.getElementById("setupCount").textContent = selectedCount() + " optional selected";
 }
 
 /* =====================================================================
@@ -828,7 +869,7 @@ document.getElementById("btnDownload").onclick = () => {
    the brand chips and the output options.
    ===================================================================== */
 const SETUP_FORMAT = "archviz-prompt-builder";
-const SETUP_VERSION = 1;
+const SETUP_VERSION = 2;
 
 function exportSetup(){
   const data = {
@@ -843,6 +884,7 @@ function exportSetup(){
     brands: [...state.brands],
     opening: state.texts.__intro || "",
     fixed: {},
+    optional: {},
     groups: {},
     custom: state.custom.map(c => ({
       name: c.label || "",
@@ -853,6 +895,8 @@ function exportSetup(){
   SECTIONS.forEach(s => {
     if(s.type === "fixed"){
       data.fixed[s.id] = state.texts[s.id] || "";
+    } else if(s.type === "optional"){
+      data.optional[s.id] = { on: !!state.checked[s.id], text: state.texts[s.id] || "" };
     } else {
       const g = {};
       s.items.forEach(i => { g[i.id] = { on: !!state.checked[i.id], text: state.texts[i.id] || "" }; });
@@ -889,6 +933,17 @@ function applySetup(data){
       const t = data.fixed && data.fixed[s.id];
       if(typeof t === "string") state.texts[s.id] = t;
       else if(s.template) state.texts[s.id] = renderTemplate(s);   // recompose from the imported brands
+      state.edited[s.id] = state.texts[s.id] !== defaultTextFor(s.id);
+    } else if(s.type === "optional"){
+      const e = data.optional && data.optional[s.id];
+      if(e && typeof e === "object"){
+        if(typeof e.on === "boolean")  state.checked[s.id] = e.on;
+        if(typeof e.text === "string") state.texts[s.id] = e.text;
+      } else if(data.fixed && typeof data.fixed[s.id] === "string"){
+        // v1 file: this section was always-on back then, so honour that
+        state.texts[s.id] = data.fixed[s.id];
+        state.checked[s.id] = true;
+      }
       state.edited[s.id] = state.texts[s.id] !== defaultTextFor(s.id);
     } else {
       const g = (data.groups && data.groups[s.id]) || {};

@@ -16,9 +16,10 @@ Three columns:
 | **Prompt blocks** | One editable text block per active item — edits are live and per-session |
 | **Final prompt** | The assembled prompt, with word/character count |
 
-Six sections are always included so every image shares the same look: Overall Style,
-Lighting & Atmosphere, Color Temperature, Sky, Outdoor Furniture, Indoor Furniture.
-Materials (14 options) and Landscaping (3 options) are opt-in per render.
+Five sections are always included so every image shares the same look: Overall Style,
+Lighting & Atmosphere, Color Temperature, Sky and Outdoor Furniture. Materials
+(14 options), Landscaping (3 options) and Indoor Furniture are opt-in per render;
+Indoor Furniture starts off.
 
 Output order is fixed:
 
@@ -48,12 +49,13 @@ hand-edit:
 ```json
 {
   "app": "archviz-prompt-builder",
-  "version": 1,
+  "version": 2,
   "projectName": "Haus Meier Nord",
   "options": { "headings": true, "bullets": true },
   "brands": ["Dedon", "Minotti"],
   "opening": "Transform this 3D architectural render into …",
-  "fixed":  { "sky": "…", "lighting": "…" },
+  "fixed":    { "sky": "…", "lighting": "…" },
+  "optional": { "indoor-furniture": { "on": false, "text": "…" } },
   "groups": { "materials": { "concrete": { "on": true, "text": "…" } } },
   "custom": [{ "name": "Corten Steel", "text": "…", "on": true }]
 }
@@ -84,6 +86,7 @@ block in `index.html`. Nothing else needs to change when you rewrite a descripti
 ```
 
 - `type: "fixed"` — always in the prompt, one text block.
+- `type: "optional"` — one text block with its own checkbox; `checked: true` starts it on.
 - `type: "group"` — checkbox list; `checked: true` makes an item on by default.
 - The Outdoor Furniture entry uses a `template` with a `{BRANDS}` placeholder that the
   brand chips fill in.
