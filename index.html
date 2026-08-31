@@ -101,20 +101,52 @@
     border-radius:6px;cursor:pointer;user-select:none;transition:background .16s ease;
   }
   label.check:hover{background:var(--bg-panel-hover)}
-  label.check input{
+  label.check input,.custom-row input[type=checkbox]{
     appearance:none;-webkit-appearance:none;flex:none;
     width:15px;height:15px;margin:3px 0 0;
     border:1.5px solid #575351;border-radius:3px;background:var(--bg-sunken);
     cursor:pointer;position:relative;transition:background .15s ease,border-color .15s ease;
   }
-  label.check input:hover{border-color:var(--copper-deep)}
-  label.check input:checked{background:var(--copper);border-color:var(--copper)}
-  label.check input:checked::after{
+  label.check input:hover,.custom-row input[type=checkbox]:hover{border-color:var(--copper-deep)}
+  label.check input:checked,.custom-row input[type=checkbox]:checked{background:var(--copper);border-color:var(--copper)}
+  label.check input:checked::after,.custom-row input[type=checkbox]:checked::after{
     content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;
     border:solid var(--bg);border-width:0 2px 2px 0;transform:rotate(43deg);
   }
-  label.check input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  label.check input:focus-visible,.custom-row input[type=checkbox]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
   label.check span{font-size:13px;color:var(--white)}
+
+  /* custom materials */
+  .custom-row{
+    display:flex;align-items:center;gap:9px;padding:5px 8px;margin:0 -8px;
+    border-radius:6px;transition:background .16s ease;
+  }
+  .custom-row:hover{background:var(--bg-panel-hover)}
+  .custom-row input[type=checkbox]{margin:0}
+  .custom-row input[type=text]{
+    flex:1;min-width:0;background:transparent;border:none;border-bottom:1px dashed #575351;
+    color:var(--white);font-family:var(--font-body);font-size:13px;padding:2px 2px 3px;
+    transition:border-color .16s ease;
+  }
+  .custom-row input[type=text]:focus{outline:none;border-bottom-color:var(--copper);border-bottom-style:solid}
+  .custom-row input[type=text]::placeholder{color:#6d6663;font-style:italic}
+  .icon-btn{
+    flex:none;width:20px;height:20px;border:none;background:none;border-radius:4px;cursor:pointer;
+    color:var(--stone);font-size:15px;line-height:1;display:grid;place-items:center;
+    font-family:var(--font-body);transition:color .16s ease,background .16s ease;
+  }
+  .icon-btn:hover{color:#d98a72;background:var(--bg-sunken)}
+  .icon-btn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+  .add-btn{
+    width:100%;margin-top:8px;padding:8px 10px;border-radius:6px;cursor:pointer;
+    background:transparent;border:1px dashed #575351;color:var(--stone);
+    font-family:var(--font-body);font-size:12px;letter-spacing:.04em;
+    transition:color .16s ease,border-color .16s ease,background .16s ease;
+  }
+  .add-btn:hover{color:var(--copper-bright);border-color:var(--copper-deep);background:var(--bg-sunken)}
+  .add-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .block-head h3 .untitled{color:var(--stone);font-style:italic;text-transform:none;letter-spacing:.02em}
+  .item-head .name .untitled{color:var(--stone);font-style:italic;text-transform:none;letter-spacing:.02em}
 
   .fixed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
   .fixed-list li{
@@ -377,7 +409,8 @@ const SECTIONS = [
       { id:"pebble",        label:"Pebble",                   text:"rounded grey gravel bed, evenly distributed, realistic scale with small shadows between the stones" },
       { id:"facade-1",      label:"Facade Color 1",           text:"fine mineral plaster (2mm grain) in a white, matte, subtle surface grain" },
       { id:"facade-2",      label:"Facade Color 2",           text:"fine mineral plaster (2mm grain) in a muted grey-beige, matte, subtle surface grain" }
-    ]
+    ],
+    custom: true
   },
   {
     id: "landscaping", title: "Landscaping", type: "group",
@@ -402,7 +435,13 @@ const SECTIONS = [
 /* =====================================================================
    STATE
    ===================================================================== */
-const state = { checked:{}, texts:{}, edited:{}, brands:[] };
+const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq:0 };
+
+/* custom materials the user adds at runtime live in state.custom as
+   { id, label } — their description text sits in state.texts like every
+   other item, so assembly and editing need no special case. */
+function isCustom(id){ return state.custom.some(c => c.id === id); }
+function itemsOf(sec){ return sec.custom ? sec.items.concat(state.custom) : sec.items; }
 
 function defaultTextFor(key){
   for(const s of SECTIONS){
@@ -426,7 +465,10 @@ function listJoin(arr){
 }
 
 function initState(){
+  // custom materials are the user's own content, not a default — carry them through
+  const keptCustom = state.custom.map(c => ({ id:c.id, text:state.texts[c.id] || "", on:state.checked[c.id] !== false }));
   state.checked = {}; state.texts = {}; state.edited = {};
+  keptCustom.forEach(c => { state.texts[c.id] = c.text; state.checked[c.id] = c.on; });
   SECTIONS.forEach(s => {
     if(s.type === "fixed"){
       if(s.brands) state.brands = [...(s.activeBrands||[])];
@@ -444,6 +486,42 @@ function initState(){
 /* =====================================================================
    SETUP COLUMN
    ===================================================================== */
+function customRow(c){
+  const row = document.createElement("div");
+  row.className = "custom-row";
+
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = !!state.checked[c.id];
+  cb.title = "Include in the prompt";
+  cb.onchange = () => { state.checked[c.id] = cb.checked; buildBlocks(); update(); };
+
+  const name = document.createElement("input");
+  name.type = "text";
+  name.value = c.label;
+  name.placeholder = "Material name";
+  name.spellcheck = false;
+  name.setAttribute("data-name-for", c.id);
+  // rebuilding the sidebar here would steal focus mid-typing, so only the
+  // block column and the assembled prompt are refreshed
+  name.oninput = () => { c.label = name.value; buildBlocks(); update(); };
+
+  const del = document.createElement("button");
+  del.className = "icon-btn";
+  del.innerHTML = "&times;";
+  del.title = "Remove this material";
+  del.setAttribute("aria-label", "Remove custom material");
+  del.onclick = () => {
+    state.custom = state.custom.filter(x => x.id !== c.id);
+    delete state.texts[c.id];
+    delete state.checked[c.id];
+    buildSetup(); buildBlocks(); update();
+  };
+
+  row.appendChild(cb); row.appendChild(name); row.appendChild(del);
+  return row;
+}
+
 function buildSetup(){
   const ul = document.getElementById("fixedList");
   ul.innerHTML = "";
@@ -472,8 +550,9 @@ function buildSetup(){
     const btn = document.createElement("button");
     btn.className = "mini-btn"; btn.textContent = "All / none";
     btn.onclick = () => {
-      const anyOff = s.items.some(i => !state.checked[i.id]);
-      s.items.forEach(i => state.checked[i.id] = anyOff);
+      const all = itemsOf(s);
+      const anyOff = all.some(i => !state.checked[i.id]);
+      all.forEach(i => state.checked[i.id] = anyOff);
       buildSetup(); buildBlocks(); update();
     };
     head.appendChild(t); head.appendChild(btn);
@@ -491,6 +570,24 @@ function buildSetup(){
       lab.appendChild(cb); lab.appendChild(sp);
       host.appendChild(lab);
     });
+
+    if(s.custom){
+      state.custom.forEach(c => host.appendChild(customRow(c)));
+
+      const add = document.createElement("button");
+      add.className = "add-btn";
+      add.textContent = "+ Add custom material";
+      add.onclick = () => {
+        const id = "custom-" + (++state.customSeq);
+        state.custom.push({ id:id, label:"" });
+        state.texts[id] = "";
+        state.checked[id] = true;
+        buildSetup(); buildBlocks(); update();
+        const input = document.querySelector('[data-name-for="' + id + '"]');
+        if(input) input.focus();
+      };
+      host.appendChild(add);
+    }
   });
 
   const sec = SECTIONS.find(s => s.brands);
@@ -511,7 +608,7 @@ function buildSetup(){
   });
 
   const total = SECTIONS.filter(s => s.type === "group")
-    .reduce((n,s) => n + s.items.filter(i => state.checked[i.id]).length, 0);
+    .reduce((n,s) => n + itemsOf(s).filter(i => state.checked[i.id]).length, 0);
   document.getElementById("setupCount").textContent = total + " optional selected";
 }
 
@@ -569,7 +666,7 @@ function buildBlocks(){
 
   let n = 0;
   SECTIONS.forEach(sec => {
-    const active = sec.type === "fixed" ? true : sec.items.filter(i => state.checked[i.id]);
+    const active = sec.type === "fixed" ? true : itemsOf(sec).filter(i => state.checked[i.id]);
     n++;
 
     const box = document.createElement("div");
@@ -606,16 +703,26 @@ function buildBlocks(){
         const h = document.createElement("div");
         h.className = "item-head";
         const nm = document.createElement("div");
-        nm.className = "name"; nm.textContent = i.label;
+        nm.className = "name";
+        if(i.label) nm.textContent = i.label;
+        else nm.innerHTML = '<span class="untitled">Unnamed material</span>';
         const sp = document.createElement("div"); sp.className = "spacer";
         h.appendChild(nm); h.appendChild(sp);
-        if(state.edited[i.id]){
-          const e = document.createElement("span"); e.className = "edited"; e.textContent = "edited";
-          h.appendChild(e);
+        if(isCustom(i.id)){
+          const c = document.createElement("span");
+          c.className = "edited"; c.textContent = "custom";
+          h.appendChild(c);
+        } else {
+          if(state.edited[i.id]){
+            const e = document.createElement("span"); e.className = "edited"; e.textContent = "edited";
+            h.appendChild(e);
+          }
+          h.appendChild(resetButton(i.id));
         }
-        h.appendChild(resetButton(i.id));
         item.appendChild(h);
-        item.appendChild(makeTextarea(i.id));
+        const ta = makeTextarea(i.id);
+        if(isCustom(i.id)) ta.placeholder = "Describe this material — texture, color, finish, reflectivity";
+        item.appendChild(ta);
         body.appendChild(item);
       });
     }
@@ -641,11 +748,13 @@ function buildPrompt(){
     if(sec.type === "fixed"){
       bodyText = (state.texts[sec.id] || "").trim();
     } else {
-      const active = sec.items.filter(i => state.checked[i.id] && (state.texts[i.id]||"").trim());
+      const active = itemsOf(sec).filter(i => state.checked[i.id] && (state.texts[i.id]||"").trim());
       if(!active.length) return;
       bodyText = active.map(i => {
         const t = (state.texts[i.id] || "").trim();
-        return bullets ? "- " + i.label + ": " + t : i.label + ": " + t;
+        const label = (i.label || "").trim();
+        const line = label ? label + ": " + t : t;   // an unnamed custom material contributes its text alone
+        return bullets ? "- " + line : line;
       }).join(bullets ? "\n" : " ");
     }
     if(!bodyText) return;
@@ -661,7 +770,7 @@ function update(){
   document.getElementById("statChars").textContent = txt.length;
   document.getElementById("statWords").textContent = txt.trim() ? txt.trim().split(/\s+/).length : 0;
   const total = SECTIONS.filter(s => s.type === "group")
-    .reduce((n,s) => n + s.items.filter(i => state.checked[i.id]).length, 0);
+    .reduce((n,s) => n + itemsOf(s).filter(i => state.checked[i.id]).length, 0);
   document.getElementById("setupCount").textContent = total + " optional selected";
 }
 
