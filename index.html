@@ -195,6 +195,9 @@
     text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;padding:2px;
   }
   .btn-ghost:hover{color:var(--copper-bright)}
+  .btn-row{display:flex;gap:8px}
+  .btn-row .btn{flex:1;min-width:0}
+  .btn-sm{padding:9px 8px;font-size:10.5px;letter-spacing:.08em}
 
   /* ---------------- blocks ---------------- */
   .block{
@@ -332,7 +335,12 @@
     <div class="actions">
       <button class="btn btn-primary" id="btnDownload">Download .txt</button>
       <button class="btn btn-secondary" id="btnCopy">Copy prompt</button>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" id="btnExport" title="Save the whole setup as a .json file you can load again later">Save setup</button>
+        <button class="btn btn-secondary btn-sm" id="btnImport" title="Load a setup you saved earlier">Load setup</button>
+      </div>
       <button class="btn btn-ghost" id="btnReset">Reset all texts to defaults</button>
+      <input type="file" id="fileImport" accept=".json,application/json" hidden>
     </div>
   </section>
 
@@ -785,22 +793,155 @@ function toast(msg){
   t._t = setTimeout(() => t.classList.remove("show"), 1900);
 }
 
-function fileName(){
+function slugName(){
   const raw = (document.getElementById("projectName").value || "archviz-prompt").trim();
-  const slug = raw.toLowerCase().replace(/[^a-z0-9\-_]+/g,"-").replace(/^-+|-+$/g,"") || "archviz-prompt";
+  return raw.toLowerCase().replace(/[^a-z0-9\-_]+/g,"-").replace(/^-+|-+$/g,"") || "archviz-prompt";
+}
+
+function stamp(){
   const d = new Date();
-  const stamp = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-  return slug + "_" + stamp + ".txt";
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function fileName(){ return slugName() + "_" + stamp() + ".txt"; }
+function setupFileName(){ return slugName() + "_setup_" + stamp() + ".json"; }
+
+function downloadFile(name, text, mime){
+  const blob = new Blob([text], {type: mime + ";charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 document.getElementById("btnDownload").onclick = () => {
-  const blob = new Blob([buildPrompt()], {type:"text/plain;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = fileName();
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadFile(fileName(), buildPrompt(), "text/plain");
   toast("Saved as " + fileName());
+};
+
+/* =====================================================================
+   SAVE / LOAD SETUP
+   The .json holds everything the page can't otherwise remember: which
+   items are on, every text as currently edited, the custom materials,
+   the brand chips and the output options.
+   ===================================================================== */
+const SETUP_FORMAT = "archviz-prompt-builder";
+const SETUP_VERSION = 1;
+
+function exportSetup(){
+  const data = {
+    app: SETUP_FORMAT,
+    version: SETUP_VERSION,
+    savedAt: new Date().toISOString(),
+    projectName: document.getElementById("projectName").value || "",
+    options: {
+      headings: document.getElementById("optHeadings").checked,
+      bullets:  document.getElementById("optBullets").checked
+    },
+    brands: [...state.brands],
+    opening: state.texts.__intro || "",
+    fixed: {},
+    groups: {},
+    custom: state.custom.map(c => ({
+      name: c.label || "",
+      text: state.texts[c.id] || "",
+      on:   !!state.checked[c.id]
+    }))
+  };
+  SECTIONS.forEach(s => {
+    if(s.type === "fixed"){
+      data.fixed[s.id] = state.texts[s.id] || "";
+    } else {
+      const g = {};
+      s.items.forEach(i => { g[i.id] = { on: !!state.checked[i.id], text: state.texts[i.id] || "" }; });
+      data.groups[s.id] = g;
+    }
+  });
+  return data;
+}
+
+function applySetup(data){
+  if(!data || typeof data !== "object" || Array.isArray(data)) throw new Error("shape");
+  if(data.app !== SETUP_FORMAT) throw new Error("wrong-app");
+
+  // start from defaults, so a partial or older file still lands somewhere sane
+  state.custom = [];
+  state.customSeq = 0;
+  initState();
+
+  if(typeof data.projectName === "string" && data.projectName.trim()){
+    document.getElementById("projectName").value = data.projectName;
+  }
+  if(data.options && typeof data.options === "object"){
+    if(typeof data.options.headings === "boolean") document.getElementById("optHeadings").checked = data.options.headings;
+    if(typeof data.options.bullets  === "boolean") document.getElementById("optBullets").checked  = data.options.bullets;
+  }
+  const brandSec = SECTIONS.find(s => s.brands);
+  if(Array.isArray(data.brands) && brandSec){
+    state.brands = data.brands.filter(b => brandSec.brands.includes(b));
+  }
+  if(typeof data.opening === "string") state.texts.__intro = data.opening;
+
+  SECTIONS.forEach(s => {
+    if(s.type === "fixed"){
+      const t = data.fixed && data.fixed[s.id];
+      if(typeof t === "string") state.texts[s.id] = t;
+      else if(s.template) state.texts[s.id] = renderTemplate(s);   // recompose from the imported brands
+      state.edited[s.id] = state.texts[s.id] !== defaultTextFor(s.id);
+    } else {
+      const g = (data.groups && data.groups[s.id]) || {};
+      s.items.forEach(i => {
+        const e = g[i.id];
+        if(!e || typeof e !== "object") return;
+        if(typeof e.on === "boolean")  state.checked[i.id] = e.on;
+        if(typeof e.text === "string") state.texts[i.id] = e.text;
+        state.edited[i.id] = state.texts[i.id] !== i.text;
+      });
+    }
+  });
+
+  if(Array.isArray(data.custom)){
+    data.custom.forEach(c => {
+      if(!c || typeof c !== "object") return;
+      const id = "custom-" + (++state.customSeq);
+      state.custom.push({ id: id, label: typeof c.name === "string" ? c.name : "" });
+      state.texts[id]   = typeof c.text === "string" ? c.text : "";
+      state.checked[id] = c.on !== false;
+    });
+  }
+}
+
+document.getElementById("btnExport").onclick = () => {
+  downloadFile(setupFileName(), JSON.stringify(exportSetup(), null, 2), "application/json");
+  toast("Setup saved as " + setupFileName());
+};
+
+document.getElementById("btnImport").onclick = () => document.getElementById("fileImport").click();
+
+document.getElementById("fileImport").onchange = ev => {
+  const input = ev.target;
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch(e){ input.value = ""; toast("That file isn't valid JSON."); return; }
+    try { applySetup(data); }
+    catch(e){
+      input.value = "";
+      toast(e.message === "wrong-app"
+        ? "That JSON isn't an Archviz Prompt Builder setup."
+        : "Could not read that setup file.");
+      return;
+    }
+    buildSetup(); buildBlocks(); update();
+    input.value = "";
+    toast("Loaded " + file.name);
+  };
+  reader.onerror = () => { input.value = ""; toast("Could not read that file."); };
+  reader.readAsText(file);
 };
 
 document.getElementById("btnCopy").onclick = async () => {
