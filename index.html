@@ -390,7 +390,7 @@ const SECTIONS = [
   },
   {
     id: "lighting", title: "Lighting & Atmosphere", type: "fixed",
-    text: "Overcast sky with soft diffused daylight, slight directional quality so one side of the building has gentle, soft-edged shadows (not harsh sun). The shorter facade sits slightly in shadow."
+    text: "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows"
   },
   {
     id: "color-temperature", title: "Color Temperature", type: "fixed",
@@ -398,7 +398,7 @@ const SECTIONS = [
   },
   {
     id: "sky", title: "Sky", type: "fixed",
-    text: "Soft grey-white overcast with a faint hint of blue, realistic cloud diffusion, no dramatic sunset colors."
+    text: "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows"
   },
   {
     id: "materials", title: "Materials", type: "group",
@@ -409,9 +409,9 @@ const SECTIONS = [
       { id:"floor-terrace", label:"Flooring Terrace",         text:"large-format grey stone slabs, matte surface, narrow even joints, realistic micro-texture and soft contact shadows" },
       { id:"floor-drive",   label:"Flooring Driveway",        text:"light grey cobblestone in a regular bond, matte, fine joints, subtle color variation between individual units" },
       { id:"embankment",    label:"Embankment Stone",         text:"natural quarried stone blocks with irregular faces, grey tones, dry-stacked look with realistic gaps and shadows" },
-      { id:"roof-tiles",    label:"Roof Tiles",               text:"anthracite clay roof tiles, matte, regular coursing, realistic depth and shadow between the rows" },
+      { id:"roof-tiles",    label:"Roof Tiles",               text:"anthracite clay roof tiles, matte, regular coursing, realistic depth and shadow between the rows, no reflection" },
       { id:"win-frame",     label:"Windows Frame",            text:"slim dark anthracite metal frames, matte powder-coated finish, crisp shadow lines" },
-      { id:"win-glass",     label:"Windows Glass",            text:"neutral slightly reflective glazing with realistic reflections of sky and surroundings, faint green-grey tint, no glow" },
+      { id:"win-glass",     label:"Windows Glass",            text:"realistic reflections of sky and surroundings, faint green-grey tint, no glow, no interior lights" },
       { id:"roof-edge",     label:"Metal Roof Edge",          text:"dark anthracite folded sheet metal trim, matte, precise clean lines with a thin shadow gap" },
       { id:"railing",       label:"Metal Railing",            text:"slim dark powder-coated steel railing, minimal profile, matte finish" },
       { id:"pebble",        label:"Pebble",                   text:"rounded grey gravel bed, evenly distributed, realistic scale with small shadows between the stones" },
@@ -435,9 +435,10 @@ const SECTIONS = [
     activeBrands: ["Dedon","Royal Botania"]
   },
   {
-    id: "indoor-furniture", title: "Indoor Furniture", type: "fixed",
-    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."
-  }
+    id: "indoor-furniture", title: "Indoor Furniture", type: "group",
+    items:[
+      { id:"indoor-furniture",  label:"Indoor Furniture",    text: "Furniture and styling visible through the glass: modern Scandinavian / Nordic style with light oak wood tones, black metal accents and minimal clean-lined pieces."}
+      ]
 ];
 
 /* =====================================================================
