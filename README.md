@@ -16,10 +16,11 @@ Three columns:
 | **Prompt blocks** | One editable text block per active item — edits are live and per-session |
 | **Final prompt** | The assembled prompt, with word/character count |
 
-Five sections are always included so every image shares the same look: Overall Style,
-Lighting & Atmosphere, Color Temperature, Sky and Outdoor Furniture. Materials
-(14 options), Landscaping (3 options) and Indoor Furniture are opt-in per render;
-Indoor Furniture starts off.
+Five sections are always in the prompt so every image shares the same look: Overall
+Style, Lighting & Atmosphere, Color Temperature, Sky and Outdoor Furniture. The
+middle three take their wording from the selected Scene (see below). Materials and
+Landscaping are ticked per render, and Background and Indoor Furniture are optional
+sections that start off.
 
 Output order is fixed:
 
@@ -38,10 +39,15 @@ INDOOR FURNITURE
 ## Scene
 
 Four presets — Sunny, Overcast, Sunset, Night — sit under **Scene** in the sidebar,
-one selectable at a time. Picking one rewrites the **Lighting & Atmosphere** and
-**Sky** blocks; both keep their place in the prompt, only the wording changes.
-Switching presets overwrites any hand edits in those two blocks, and **Reset** on
-them restores the current preset rather than the sunny one.
+one selectable at a time. Picking one rewrites the **Lighting & Atmosphere**,
+**Color Temperature** and **Sky** blocks; all three keep their place in the prompt
+as separate blocks, only the wording changes. Switching presets overwrites any hand
+edits in those blocks, and **Reset** on them restores the current preset rather than
+the sunny one.
+
+Color Temperature moves with the scene because the daylight presets want unlit,
+neutral interiors while Night wants warm interior light switched on — a single fixed
+wording would contradict one or the other.
 
 The presets live in the `SCENES` array in `index.html`. Each holds one text per
 section id, so putting another section under scene control means adding `scene: true`
