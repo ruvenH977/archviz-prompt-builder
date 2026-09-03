@@ -166,6 +166,22 @@
   .chip:hover{border-color:var(--copper-deep);color:var(--white)}
   .chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
   .chip.on{background:var(--copper-deep);border-color:var(--copper);color:var(--white)}
+  .scene-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding-top:6px}
+  .scene-option{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+  .scene-chip{
+    width:100%;display:flex;align-items:center;justify-content:center;
+    padding:10px 0;
+  }
+  .scene-chip svg{
+    width:18px;height:18px;flex:none;
+    fill:none;stroke:currentColor;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round;
+  }
+  .scene-label{
+    font-size:10.5px;line-height:1.2;letter-spacing:.02em;
+    color:var(--stone);text-align:center;transition:color .16s ease;
+  }
+  .scene-option.on .scene-label{color:var(--copper-bright)}
 
   .field label{display:block;margin-bottom:5px}
   .field input[type=text]{
@@ -323,6 +339,7 @@
         <ul class="fixed-list" id="fixedList"></ul>
       </div>
 
+      <div class="group" id="group-scene"></div>
       <div class="group" id="group-materials"></div>
       <div class="group" id="group-landscaping"></div>
       <div class="group" id="group-optional"></div>
@@ -392,16 +409,16 @@ const SECTIONS = [
     text: "photorealistic architectural photography, shot on a full-frame camera with a wide-angle lens, natural color grading, realistic material reflectivity and shadow softness, no CGI look, no oversaturation — resembling a professional real estate / architecture photo shoot."
   },
   {
-    id: "lighting", title: "Lighting & Atmosphere", type: "fixed",
-    text: "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows"
+    id: "lighting", title: "Lighting & Atmosphere", type: "fixed", scene: true
+    // text comes from the selected entry in SCENES below
   },
   {
     id: "color-temperature", title: "Color Temperature", type: "fixed",
     text: "no warm interior lighting — interiors should read as dim and neutral, glass slightly reflective rather than glowing."
   },
   {
-    id: "sky", title: "Sky", type: "fixed",
-    text: "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows"
+    id: "sky", title: "Sky", type: "fixed", scene: true
+    // text comes from the selected entry in SCENES below
   },
   {
     id: "materials", title: "Materials", type: "group",
@@ -457,7 +474,55 @@ const SECTIONS = [
 /* =====================================================================
    STATE
    ===================================================================== */
-const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq:0 };
+/* =====================================================================
+   SCENES — one at a time. Each preset supplies the text for every
+   section flagged `scene: true` (Lighting & Atmosphere and Sky), so
+   those two blocks keep their place in the prompt and only change
+   wording. Add a key here to put another section under scene control.
+   ===================================================================== */
+const SCENES = [
+  {
+    id: "sunny", label: "Sunny", icon: "sun",
+    texts: {
+      lighting: "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows",
+      sky:      "believable bright blue sky with soft natural clouds. natural daylight, realistic shadows"
+    }
+  },
+  {
+    id: "overcast", label: "Overcast", icon: "cloud",
+    texts: {
+      lighting: "Overcast sky with soft diffused daylight, slight directional quality so one side of the building has gentle, soft-edged shadows (not harsh sun). The shorter facade sits slightly in shadow.",
+      sky:      "Soft grey-white overcast with a faint hint of blue, realistic cloud diffusion, no dramatic sunset colors."
+    }
+  },
+  {
+    id: "sunset", label: "Sunset", icon: "sunset",
+    texts: {
+      lighting: "Low late-afternoon sun close to the horizon, warm golden light raking across the facade from one side, long soft-edged shadows stretching over the terrain, surfaces facing away falling into cool blue-grey shade.",
+      sky:      "Clear evening sky graded from warm amber near the horizon into soft blue overhead, thin high clouds catching the last light, restrained and natural, no oversaturated orange."
+    }
+  },
+  {
+    id: "night", label: "Night", icon: "stars",
+    texts: {
+      lighting: "Blue-hour dusk shortly after sunset, the sky itself as the soft ambient key light, warm interior light spilling gently through the glazing, discreet exterior accent lighting grazing the facade and the path, no harsh spots and no lens flares.",
+      sky:      "Deep blue night sky with scattered visible stars, subtle gradient towards a slightly lighter horizon, thin clouds barely catching light, clear and calm."
+    }
+  }
+];
+
+/* line-art icons, 24x24, stroked with currentColor (see .scene-chip svg) */
+const SCENE_ICONS = {
+  sun:    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4"/><path d="M12 1.8v2.6M12 19.6v2.6M4.8 4.8l1.85 1.85M17.35 17.35l1.85 1.85M1.8 12h2.6M19.6 12h2.6M4.8 19.2l1.85-1.85M17.35 6.65l1.85-1.85"/></svg>',
+  cloud:  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
+  sunset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2.6v6.4M4.6 10.6l1.5 1.5M19.4 10.6l-1.5 1.5M1.6 18h2.2M20.2 18h2.2"/><path d="M22.4 22H1.6"/><path d="M16 5.4l-4 4-4-4"/></svg>',
+  stars:  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 L9.4 6.6 L13 8 L9.4 9.4 L8 13 L6.6 9.4 L3 8 L6.6 6.6 Z"/><path d="M17.5 10.8 L18.4 13.1 L20.7 14 L18.4 14.9 L17.5 17.2 L16.6 14.9 L14.3 14 L16.6 13.1 Z"/><path d="M10.5 16.1 L11.17 17.83 L12.9 18.5 L11.17 19.17 L10.5 20.9 L9.83 19.17 L8.1 18.5 L9.83 17.83 Z"/></svg>'
+};
+
+const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq:0, scene:SCENES[0].id };
+
+function currentScene(){ return SCENES.find(s => s.id === state.scene) || SCENES[0]; }
+function sceneTextFor(id){ const t = currentScene().texts[id]; return typeof t === "string" ? t : ""; }
 
 /* custom materials the user adds at runtime live in state.custom as
    { id, label } — their description text sits in state.texts like every
@@ -474,7 +539,8 @@ function itemsOf(sec){ return sec.custom ? sec.items.concat(state.custom) : sec.
 
 function defaultTextFor(key){
   for(const s of SECTIONS){
-    if((s.type === "fixed" || s.type === "optional") && s.id === key) return s.template ? renderTemplate(s) : s.text;
+    if((s.type === "fixed" || s.type === "optional") && s.id === key)
+      return s.scene ? sceneTextFor(key) : (s.template ? renderTemplate(s) : s.text);
     if(s.type === "group"){
       const it = (s.items||[]).find(i => i.id === key);
       if(it) return it.text;
@@ -501,7 +567,7 @@ function initState(){
   SECTIONS.forEach(s => {
     if(s.type === "fixed" || s.type === "optional"){
       if(s.brands) state.brands = [...(s.activeBrands||[])];
-      state.texts[s.id] = s.template ? renderTemplate(s) : s.text;
+      state.texts[s.id] = s.scene ? sceneTextFor(s.id) : (s.template ? renderTemplate(s) : s.text);
       if(s.type === "optional") state.checked[s.id] = !!s.checked;
     } else {
       s.items.forEach(i => {
@@ -555,7 +621,7 @@ function customRow(c){
 function buildSetup(){
   const ul = document.getElementById("fixedList");
   ul.innerHTML = "";
-  SECTIONS.filter(s => s.type === "fixed").forEach(s => {
+  SECTIONS.filter(s => s.type === "fixed" && !s.scene).forEach(s => {
     const li = document.createElement("li");
     li.textContent = s.title;
     li.title = "Jump to this block";
@@ -619,6 +685,44 @@ function buildSetup(){
       host.appendChild(add);
     }
   });
+
+  // scene — exactly one preset at a time, driving the scene-flagged sections
+  const sceneHost = document.getElementById("group-scene");
+  sceneHost.innerHTML = "";
+  const sHead = document.createElement("div");
+  sHead.className = "group-head";
+  const sTitle = document.createElement("span");
+  sTitle.className = "eyebrow"; sTitle.textContent = "Scene";
+  sHead.appendChild(sTitle);
+  sceneHost.appendChild(sHead);
+  const sceneWrap = document.createElement("div");
+  sceneWrap.className = "scene-chips";
+  SCENES.forEach(sc => {
+    const on = state.scene === sc.id;
+    const opt = document.createElement("div");
+    opt.className = "scene-option" + (on ? " on" : "");
+    const btn = document.createElement("button");
+    btn.className = "chip scene-chip" + (on ? " on" : "");
+    btn.innerHTML = SCENE_ICONS[sc.icon];
+    btn.title = "Set Lighting & Atmosphere and Sky to the " + sc.label.toLowerCase() + " wording";
+    btn.setAttribute("aria-label", sc.label);
+    btn.setAttribute("aria-pressed", on);
+    const cap = document.createElement("span");
+    cap.className = "scene-label";
+    cap.textContent = sc.label;
+    btn.onclick = () => {
+      // a preset switch rewrites the scene blocks, including any hand edits
+      state.scene = sc.id;
+      SECTIONS.filter(x => x.scene).forEach(x => {
+        state.texts[x.id] = sceneTextFor(x.id);
+        state.edited[x.id] = false;
+      });
+      buildSetup(); buildBlocks(); update();
+    };
+    opt.appendChild(btn); opt.appendChild(cap);
+    sceneWrap.appendChild(opt);
+  });
+  sceneHost.appendChild(sceneWrap);
 
   // optional single-text sections — one checkbox each, no per-item labels
   const optHost = document.getElementById("group-optional");
@@ -731,8 +835,9 @@ function buildBlocks(){
     head.className = "block-head";
     head.innerHTML = '<div class="num">' + n + '</div><h3>' + sec.title + '</h3>';
     const tag = document.createElement("div");
-    tag.className = "tag" + (((sec.type === "group" && active.length) || (sec.type === "optional" && optOn)) ? " active" : "");
-    tag.textContent = sec.type === "fixed"    ? "always"
+    tag.className = "tag" + ((sec.scene || (sec.type === "group" && active.length) || (sec.type === "optional" && optOn)) ? " active" : "");
+    tag.textContent = sec.scene               ? currentScene().label
+                    : sec.type === "fixed"    ? "always"
                     : sec.type === "optional" ? (optOn ? "included" : "off")
                     : active.length + " selected";
     head.appendChild(tag);
@@ -880,7 +985,7 @@ document.getElementById("btnDownload").onclick = () => {
    the brand chips and the output options.
    ===================================================================== */
 const SETUP_FORMAT = "archviz-prompt-builder";
-const SETUP_VERSION = 2;
+const SETUP_VERSION = 3;
 
 function exportSetup(){
   const data = {
@@ -893,6 +998,7 @@ function exportSetup(){
       bullets:  document.getElementById("optBullets").checked
     },
     brands: [...state.brands],
+    scene: state.scene,
     opening: state.texts.__intro || "",
     fixed: {},
     optional: {},
@@ -924,6 +1030,9 @@ function applySetup(data){
   // start from defaults, so a partial or older file still lands somewhere sane
   state.custom = [];
   state.customSeq = 0;
+  // the scene decides what the scene-driven blocks default to, so pick it first
+  state.scene = (typeof data.scene === "string" && SCENES.some(x => x.id === data.scene))
+    ? data.scene : SCENES[0].id;
   initState();
 
   if(typeof data.projectName === "string" && data.projectName.trim()){

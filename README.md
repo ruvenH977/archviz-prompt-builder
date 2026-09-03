@@ -35,6 +35,18 @@ OUTDOOR FURNITURE
 INDOOR FURNITURE
 ```
 
+## Scene
+
+Four presets — Sunny, Overcast, Sunset, Night — sit under **Scene** in the sidebar,
+one selectable at a time. Picking one rewrites the **Lighting & Atmosphere** and
+**Sky** blocks; both keep their place in the prompt, only the wording changes.
+Switching presets overwrites any hand edits in those two blocks, and **Reset** on
+them restores the current preset rather than the sunny one.
+
+The presets live in the `SCENES` array in `index.html`. Each holds one text per
+section id, so putting another section under scene control means adding `scene: true`
+to that section and a matching key to every preset.
+
 ## Saving and reusing a setup
 
 **Save setup** writes a `.json` file holding everything the page cannot otherwise
@@ -49,11 +61,12 @@ hand-edit:
 ```json
 {
   "app": "archviz-prompt-builder",
-  "version": 2,
+  "version": 3,
   "projectName": "Haus Meier Nord",
   "options": { "headings": true, "bullets": true },
   "brands": ["Dedon", "Minotti"],
   "opening": "Transform this 3D architectural render into …",
+  "scene":    "sunny",
   "fixed":    { "sky": "…", "lighting": "…" },
   "optional": { "indoor-furniture": { "on": false, "text": "…" } },
   "groups": { "materials": { "concrete": { "on": true, "text": "…" } } },
@@ -86,6 +99,8 @@ block in `index.html`. Nothing else needs to change when you rewrite a descripti
 ```
 
 - `type: "fixed"` — always in the prompt, one text block.
+- `scene: true` on a fixed section — its text comes from the selected entry in
+  `SCENES` instead of its own `text`.
 - `type: "optional"` — one text block with its own checkbox; `checked: true` starts it on.
 - `type: "group"` — checkbox list; `checked: true` makes an item on by default.
 - The Outdoor Furniture entry uses a `template` with a `{BRANDS}` placeholder that the
