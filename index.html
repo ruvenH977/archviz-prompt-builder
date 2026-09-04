@@ -214,7 +214,16 @@
     color:var(--white);
   }
   .opt-label-input::placeholder{color:#6d6663;font-style:italic}
-  .add-btn.add-inline{margin-top:12px}
+  .add-row{display:flex;gap:8px;align-items:stretch}
+  .add-row.add-inline{margin-top:12px}
+  .add-row .add-btn{margin-top:0;flex:1;min-width:0}
+  .check.add-color{
+    flex:none;align-items:center;gap:7px;padding:0 10px;margin:0;
+    border:1px dashed #575351;border-radius:6px;
+  }
+  .check.add-color:hover{background:var(--bg-sunken);border-color:var(--copper-deep)}
+  .add-color input[type=checkbox]{margin:0}
+  .add-color span{font-size:11.5px;color:var(--stone);white-space:nowrap}
 
   .field label{display:block;margin-bottom:5px}
   .field input[type=text]{
@@ -399,9 +408,9 @@
   .cp-note{padding:9px 18px 0;font-size:11px;color:var(--stone);min-height:16px;letter-spacing:.02em}
   .cp-note.warn{color:#d98a72}
   .cp-presets-wrap{padding:6px 18px 4px}
-  .cp-presets{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding-top:7px}
+  .cp-presets{display:flex;flex-wrap:wrap;gap:6px;padding-top:7px}
   .cp-swatch{
-    width:100%;aspect-ratio:1;border-radius:5px;cursor:pointer;
+    width:52px;height:42px;flex:none;border-radius:5px;cursor:pointer;
     border:1px solid var(--line);padding:0;transition:transform .12s ease,border-color .12s ease;
   }
   .cp-swatch:hover{transform:scale(1.12);border-color:var(--copper-bright)}
@@ -626,7 +635,7 @@ const SECTIONS = [
       { id:"floor-terrace",   label:"Flooring Terrace",         checked:false,          text:"large-format grey stone slabs, matte surface, narrow even joints, realistic micro-texture and soft contact shadows" },
       { id:"floor-drive",     label:"Flooring Driveway",        checked:false,          text:"light grey cobblestone in a regular bond, matte, fine joints, subtle color variation between individual units" },
       { id:"embankment",      label:"Embankment Stone",         checked:false,          text:"natural quarried stone blocks with irregular faces, grey tones, dry-stacked look with realistic gaps and shadows" },
-      { id:"roof-tiles",      label:"Roof Tiles",               checked:false,          text:"anthracite clay roof tiles (#3D3D3A), matte, regular coursing, realistic depth and shadow between the rows, no reflection" },
+      { id:"roof-tiles",      label:"Roof Tiles",               checked:false,          text:"anthracite clay roof tiles (#3D3D3A) with verge tile, matte, regular coursing, realistic depth and shadow between the rows, no reflection" },
       { id:"barge-board",     label:"Barge Board",              checked:false,          text:"white glazed wood, fine structure, direction towards gable"},
       { id:"win-frame",       label:"Windows Frame",            checked:true,           text:"slim dark anthracite metal frames (#3A3A3D), matte powder-coated finish, crisp shadow lines" },
       { id:"win-glass",       label:"Windows Glass",            checked:true,           text:"realistic reflections of sky and surroundings, faint green-grey tint, no glow, no interior lights" },
@@ -785,7 +794,8 @@ const SCENE_ICONS = {
   stars:  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 L9.4 6.6 L13 8 L9.4 9.4 L8 13 L6.6 9.4 L3 8 L6.6 6.6 Z"/><path d="M17.5 10.8 L18.4 13.1 L20.7 14 L18.4 14.9 L17.5 17.2 L16.6 14.9 L14.3 14 L16.6 13.1 Z"/><path d="M10.5 16.1 L11.17 17.83 L12.9 18.5 L11.17 19.17 L10.5 20.9 L9.83 19.17 L8.1 18.5 L9.83 17.83 Z"/></svg>'
 };
 
-const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq:0, scene:SCENES[0].id };
+const state = { checked:{}, texts:{}, edited:{}, brands:[], custom:[], customSeq:0,
+                scene:SCENES[0].id, customColor:false };
 
 function currentScene(){ return SCENES.find(s => s.id === state.scene) || SCENES[0]; }
 function sceneTextFor(id){ const t = currentScene().texts[id]; return typeof t === "string" ? t : ""; }
@@ -848,6 +858,27 @@ function initState(){
 /* =====================================================================
    SETUP COLUMN
    ===================================================================== */
+/* A custom material can carry a colour, which is what makes the long-press
+   picker available on it. The clause is appended so the picker's own rename
+   logic finds the colour word; removing it again only touches the clause we
+   added, never wording the user typed themselves. */
+const CUSTOM_COLOR_HEX = "#9A9A97";
+function customColorClause(hex){ return "in a " + nameForHex(hex) + " (" + hex + ")"; }
+
+function addCustomColor(id){
+  if(hexOf(state.texts[id])) return;
+  const clause = customColorClause(CUSTOM_COLOR_HEX);
+  const cur = (state.texts[id] || "").trim();
+  state.texts[id] = cur ? cur.replace(/[,;.\s]*$/, "") + ", " + clause : clause;
+}
+
+function stripCustomColor(id){
+  const t = state.texts[id] || "";
+  // only strip a colour clause still sitting where we put it, at the very end
+  const m = t.match(/(?:^|,\s*)in an? [a-z\- ]+\(#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\)\s*$/);
+  if(m) state.texts[id] = t.slice(0, m.index).replace(/[,;\s]*$/, "");
+}
+
 /* one button + caption, used by every option grid */
 function optionButton(o){
   const item = document.createElement("div");
@@ -1064,19 +1095,41 @@ function buildSetup(){
       // the checkbox-list fallback keeps its own row layout
       if(!s.icons) state.custom.forEach(c => host.appendChild(customRow(c)));
 
+      const addRow = document.createElement("div");
+      addRow.className = "add-row" + (s.icons ? " add-inline" : "");
+
       const add = document.createElement("button");
-      add.className = "add-btn" + (s.icons ? " add-inline" : "");
+      add.className = "add-btn";
       add.textContent = "+ Add custom material";
       add.onclick = () => {
         const id = "custom-" + (++state.customSeq);
         state.custom.push({ id:id, label:"" });
         state.texts[id] = "";
         state.checked[id] = true;
+        if(state.customColor) addCustomColor(id);
         buildSetup(); buildBlocks(); update();
         const input = document.querySelector('[data-name-for="' + id + '"]');
         if(input) input.focus();
       };
-      host.appendChild(add);
+
+      const colLab = document.createElement("label");
+      colLab.className = "check add-color";
+      colLab.title = "Give custom materials a colour, so a long press opens the picker on them";
+      const colCb = document.createElement("input");
+      colCb.type = "checkbox";
+      colCb.checked = !!state.customColor;
+      colCb.onchange = () => {
+        state.customColor = colCb.checked;
+        // apply to the ones already there, so ticking the box does something visible
+        state.custom.forEach(c => colCb.checked ? addCustomColor(c.id) : stripCustomColor(c.id));
+        buildSetup(); buildBlocks(); update();
+      };
+      const colSpan = document.createElement("span");
+      colSpan.textContent = "colour";
+      colLab.appendChild(colCb); colLab.appendChild(colSpan);
+
+      addRow.appendChild(add); addRow.appendChild(colLab);
+      host.appendChild(addRow);
     }
   });
 
@@ -1353,6 +1406,12 @@ const COLOR_PRESETS = [
   ["Copper",      "#A3775C"]
 ];
 
+/* Some materials only ever come in a handful of colours, so they get their
+   own preset row instead of the general palette. */
+const MATERIAL_PRESETS = {
+  "roof-tiles": [["Anthracite","#3D3D3A"], ["Brown","#45342C"], ["Red","#CE846B"]]
+};
+
 function hexOf(text){
   const m = (text || "").match(HEX_RE);
   if(!m) return null;
@@ -1406,6 +1465,7 @@ const COLOR_NAMES = [
   ["basalt grey","#57575A"],  ["slate grey","#4A4E52"],  ["anthracite","#3A3A3D"],
   ["graphite","#2E2E30"],     ["near black","#1A1A1A"],  ["black","#050505"],
   ["taupe","#8B7E6E"],        ["copper","#A3775C"],      ["bronze","#7A5C43"],
+  ["brown","#45342C"],        ["red","#CE846B"],
   ["terracotta","#B5651D"],   ["corten rust","#8C4A2F"], ["oxide red","#8B3A32"],
   ["olive green","#6B7042"],  ["moss green","#4F5F3A"],  ["dark green","#2F4A34"],
   ["steel blue","#4A6178"],   ["dusty blue","#7A93A8"],  ["sky blue","#8FB4CF"],
@@ -1420,11 +1480,12 @@ const COLOR_WORDS = [
   "basalt grey","basalt gray","slate grey","slate gray","stone grey","stone gray",
   "light grey","light gray","mid grey","mid gray","dark grey","dark gray",
   "warm grey","warm gray","cool grey","cool gray","grey-beige","grey beige",
+  "dark brown","light brown","grey brown","grey-brown","reddish brown",
   "near black","off-white","off white","chalk white","corten rust","oxide red",
   "olive green","moss green","dark green","steel blue","dusty blue","sky blue",
   "light beige","anthracite","graphite","charcoal","basalt","slate","greige",
   "taupe","beige","cream","ivory","sand","ochre","mustard","terracotta","corten",
-  "copper","bronze","white","black","grey","gray","green","blue","red",
+  "copper","bronze","white","black","brown","grey","gray","green","blue","red",
   "dark","light","pale","deep"
 ];
 
@@ -1595,7 +1656,7 @@ function resolveNcs(code){
 }
 
 const CP_SIZE = 176;
-const cp = { id:null, original:null, h:0, s:0, v:1, source:null };
+const cp = { id:null, original:null, h:0, s:0, v:1, source:null, nameHint:null };
 const cpEl = {
   modal:   document.getElementById("colorModal"),
   canvas:  document.getElementById("cpWheel"),
@@ -1651,7 +1712,7 @@ function cpSyncUi(){
   cpEl.marker.style.top  = (R + Math.sin(a) * cp.s * R) + "px";
   cpEl.marker.style.background = hex;
   cpEl.preview.style.background = hex;
-  cpEl.previewHex.textContent = hex + "  ·  " + nameForHex(hex);
+  cpEl.previewHex.textContent = hex + "  ·  " + (cp.nameHint || nameForHex(hex));
   if(document.activeElement !== cpEl.hex) cpEl.hex.value = hex;
   cpEl.hex.classList.remove("bad");
   cpEl.value.value = Math.round(cp.v * 100);
@@ -1676,7 +1737,7 @@ function cpApply(){
   if(!cp.id) return;
   const hex = cpHex();
   let t = replaceHex(state.texts[cp.id], hex);
-  if(cpEl.rename.checked) t = renameColorWord(t, nameForHex(hex));
+  if(cpEl.rename.checked) t = renameColorWord(t, cp.nameHint || nameForHex(hex));
   state.texts[cp.id] = t;
   state.edited[cp.id] = state.texts[cp.id] !== defaultTextFor(cp.id);
   const ta = document.querySelector('[data-text-for="' + cp.id + '"]');
@@ -1704,6 +1765,7 @@ function openColorPicker(id, label){
   cpEl.material.textContent = label || "";
   cp.source = null;
   cpNote("");
+  cpBuildPresets(id);
   cpEl.wasDot.style.background = hex;
   cpEl.wasHex.textContent = "was " + hex;
   cpEl.modal.hidden = false;
@@ -1747,16 +1809,20 @@ function cpNote(msg, warn){
 });
 
 /* ---- presets ---- */
-COLOR_PRESETS.forEach(([name, hex]) => {
-  const b = document.createElement("button");
-  b.className = "cp-swatch";
-  b.style.background = hex;
-  b.dataset.hex = hex;
-  b.title = name + " · " + hex;
-  b.setAttribute("aria-label", name + " " + hex);
-  b.onclick = () => cpSet(hex);
-  cpEl.presets.appendChild(b);
-});
+function cpBuildPresets(id){
+  const list = MATERIAL_PRESETS[id] || COLOR_PRESETS;
+  cpEl.presets.innerHTML = "";
+  list.forEach(([name, hex]) => {
+    const b = document.createElement("button");
+    b.className = "cp-swatch";
+    b.style.background = hex;
+    b.dataset.hex = hex.toUpperCase();
+    b.title = name + " · " + hex;
+    b.setAttribute("aria-label", name + " " + hex);
+    b.onclick = () => { cp.nameHint = name.toLowerCase(); cpSet(hex); cp.nameHint = null; };
+    cpEl.presets.appendChild(b);
+  });
+}
 
 /* ---- wheel dragging ---- */
 (function(){
@@ -1865,6 +1931,7 @@ function exportSetup(){
     },
     brands: [...state.brands],
     scene: state.scene,
+    customColor: !!state.customColor,
     opening: state.texts.__intro || "",
     fixed: {},
     optional: {},
@@ -1913,6 +1980,7 @@ function applySetup(data){
     state.brands = data.brands.filter(b => brandSec.brands.includes(b));
   }
   if(typeof data.opening === "string") state.texts.__intro = data.opening;
+  if(typeof data.customColor === "boolean") state.customColor = data.customColor;
 
   SECTIONS.forEach(s => {
     if(s.type === "fixed"){
