@@ -315,6 +315,95 @@
   .site-link{color:var(--stone);text-decoration:none;border-bottom:1px solid var(--line);transition:color .2s ease,border-color .2s ease}
   .site-link:hover,.site-link:focus-visible{color:var(--copper-bright);border-color:var(--copper-bright)}
 
+  /* ---------------- colour picker ---------------- */
+  [hidden]{display:none!important}
+  .modal{
+    position:fixed;inset:0;z-index:80;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    background:rgba(20,19,19,.72);backdrop-filter:blur(3px);
+  }
+  .modal-panel{
+    width:min(520px,100%);max-height:calc(100vh - 48px);overflow-y:auto;
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .modal-head{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 18px 12px;border-bottom:1px solid var(--line);
+  }
+  .modal-head h3{
+    margin:0;font-family:var(--font-display);font-weight:700;font-size:11.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--copper);
+  }
+  .modal-head .modal-sub{font-size:12px;color:var(--stone);letter-spacing:.02em}
+  .modal-head .modal-x{margin-left:auto;width:24px;height:24px;font-size:17px}
+  .cp-body{display:flex;gap:20px;padding:18px;flex-wrap:wrap}
+  .cp-wheel-col{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .cp-wheel-wrap{position:relative;width:176px;height:176px;touch-action:none}
+  #cpWheel{width:176px;height:176px;display:block;border-radius:50%;cursor:crosshair}
+  .cp-marker{
+    position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+    border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.5);
+    pointer-events:none;
+  }
+  .cp-range{
+    -webkit-appearance:none;appearance:none;width:176px;height:11px;
+    border-radius:99px;border:1px solid var(--line);cursor:pointer;
+  }
+  .cp-range:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .cp-range::-webkit-slider-thumb{
+    -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--white);border:2px solid var(--bg);cursor:pointer;
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .cp-range::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--white);
+    border:2px solid var(--bg);cursor:pointer;
+  }
+  .cp-side{flex:1;min-width:150px;display:flex;flex-direction:column;gap:14px}
+  .cp-preview{
+    flex:1;min-height:86px;border-radius:6px;border:1px solid var(--line);
+    display:flex;align-items:flex-end;justify-content:flex-end;padding:7px 9px;
+  }
+  .cp-preview span{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;
+    padding:2px 6px;border-radius:3px;background:rgba(20,19,19,.55);color:#fff;
+  }
+  #cpHex{font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+  #cpHex.bad{border-color:#d98a72}
+  .cp-was{
+    display:flex;align-items:center;gap:8px;align-self:flex-start;
+    background:none;border:none;padding:3px 0;cursor:pointer;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;color:var(--stone);
+    transition:color .16s ease;
+  }
+  .cp-was:hover{color:var(--copper-bright)}
+  .cp-was:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .cp-was i{
+    width:14px;height:14px;border-radius:3px;border:1px solid var(--line);
+    flex:none;display:block;
+  }
+  .cp-presets-wrap{padding:0 18px 4px}
+  .cp-presets{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding-top:7px}
+  .cp-swatch{
+    width:100%;aspect-ratio:1;border-radius:5px;cursor:pointer;
+    border:1px solid var(--line);padding:0;transition:transform .12s ease,border-color .12s ease;
+  }
+  .cp-swatch:hover{transform:scale(1.12);border-color:var(--copper-bright)}
+  .cp-swatch:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .cp-swatch.on{border-color:var(--copper-bright);box-shadow:0 0 0 2px rgba(199,166,136,.35)}
+  .modal-foot{
+    display:flex;align-items:center;gap:10px;justify-content:flex-end;
+    padding:14px 18px;border-top:1px solid var(--line);
+  }
+  .modal-foot .btn{width:auto;padding:9px 20px}
+  .modal-foot .btn-ghost{padding:4px 6px}
+  .opt-btn{position:relative}
+  .opt-swatch{
+    position:absolute;right:6px;bottom:5px;width:9px;height:9px;border-radius:50%;
+    border:1px solid rgba(20,19,19,.55);pointer-events:none;
+  }
+
   .toast{
     position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);
     background:var(--bg-panel);color:var(--white);padding:11px 20px;border-radius:8px;
@@ -423,6 +512,43 @@
   <span class="note">Archviz Prompt Builder</span>
   <span class="note">MDH &middot; <a class="site-link" href="https://www.marty-designhaus.ch/" target="_blank" rel="noopener noreferrer">marty-designhaus.ch</a></span>
 </footer>
+
+<div class="modal" id="colorModal" hidden>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+    <div class="modal-head">
+      <h3 id="cpTitle">Colour</h3>
+      <span class="modal-sub" id="cpMaterial"></span>
+      <button class="icon-btn modal-x" id="cpClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="cp-body">
+      <div class="cp-wheel-col">
+        <div class="cp-wheel-wrap">
+          <canvas id="cpWheel" width="176" height="176"></canvas>
+          <div class="cp-marker" id="cpMarker"></div>
+        </div>
+        <input type="range" class="cp-range" id="cpValue" min="0" max="100" step="1" aria-label="Brightness">
+      </div>
+      <div class="cp-side">
+        <div class="cp-preview" id="cpPreview"><span id="cpPreviewHex">#000000</span></div>
+        <div class="field">
+          <label class="eyebrow" for="cpHex">Hex</label>
+          <input type="text" id="cpHex" spellcheck="false" maxlength="7">
+        </div>
+        <button class="cp-was" id="cpWas" title="Back to this colour">
+          <i id="cpWasDot"></i><span id="cpWasHex"></span>
+        </button>
+      </div>
+    </div>
+    <div class="cp-presets-wrap">
+      <span class="eyebrow">Presets</span>
+      <div class="cp-presets" id="cpPresets"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cpRevert">Revert to previous</button>
+      <button class="btn btn-primary btn-sm" id="cpDone">Done</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -691,7 +817,34 @@ function optionButton(o){
   if(o.title) btn.title = o.title;
   btn.setAttribute("aria-label", o.label || "Custom material");
   btn.setAttribute("aria-pressed", !!o.on);
-  btn.onclick = o.onClick;
+  btn.onclick = e => {
+    if(btn._lp){ btn._lp = false; return; }   // swallow the click a long press ends with
+    o.onClick(e);
+  };
+
+  if(o.swatch){
+    const dot = document.createElement("span");
+    dot.className = "opt-swatch";
+    dot.style.background = o.swatch;
+    if(o.swatchFor) dot.setAttribute("data-swatch-for", o.swatchFor);
+    btn.appendChild(dot);
+  }
+
+  if(o.onLongPress){
+    let timer = null, sx = 0, sy = 0;
+    const clear = () => { if(timer){ clearTimeout(timer); timer = null; } };
+    btn.addEventListener("pointerdown", e => {
+      clear(); sx = e.clientX; sy = e.clientY;
+      timer = setTimeout(() => { timer = null; btn._lp = true; o.onLongPress(); }, 450);
+    });
+    btn.addEventListener("pointermove", e => {
+      if(timer && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) clear();
+    });
+    ["pointerup","pointercancel","pointerleave"].forEach(ev => btn.addEventListener(ev, clear));
+    // right-click is the same shortcut on a desktop; it fires no click afterwards
+    btn.addEventListener("contextmenu", e => { e.preventDefault(); clear(); o.onLongPress(); });
+  }
+
   wrap.appendChild(btn);
 
   // custom materials carry their own delete control, built-ins do not
@@ -804,11 +957,16 @@ function buildSetup(){
       const grid = document.createElement("div");
       grid.className = "opt-grid";
       s.items.forEach(i => {
+        const colour = hexOf(state.texts[i.id]);
         grid.appendChild(optionButton({
           mark:  ITEM_ICONS[i.id] || ITEM_ICONS._default,
           label: i.label,
           on:    !!state.checked[i.id],
-          title: i.label,
+          title: colour ? i.label + " · " + colour + " — long-press or right-click to change the colour"
+                        : i.label,
+          swatch: colour,
+          swatchFor: i.id,
+          onLongPress: colour ? () => openColorPicker(i.id, i.label) : null,
           onClick: () => {
             state.checked[i.id] = !state.checked[i.id];
             buildSetup(); buildBlocks(); update();
@@ -820,7 +978,13 @@ function buildSetup(){
           mark:  ITEM_ICONS._custom,
           label: c.label,
           on:    !!state.checked[c.id],
-          title: c.label || "Custom material",
+          title: hexOf(state.texts[c.id])
+                   ? (c.label || "Custom material") + " · long-press to change the colour"
+                   : (c.label || "Custom material"),
+          swatch: hexOf(state.texts[c.id]),
+          swatchFor: c.id,
+          onLongPress: hexOf(state.texts[c.id])
+                   ? () => openColorPicker(c.id, c.label || "Custom material") : null,
           nameFor: c.id,
           onClick: () => {
             state.checked[c.id] = !state.checked[c.id];
@@ -963,6 +1127,7 @@ function makeTextarea(key){
   const ta = document.createElement("textarea");
   ta.value = state.texts[key] || "";
   ta.rows = 2;
+  ta.setAttribute("data-text-for", key);
   ta.oninput = () => {
     state.texts[key] = ta.value;
     state.edited[key] = ta.value !== defaultTextFor(key);
@@ -1125,6 +1290,232 @@ function update(){
 /* =====================================================================
    ACTIONS
    ===================================================================== */
+
+/* =====================================================================
+   COLOUR PICKER
+   Any material whose text carries a hex code can be recoloured: long-press
+   (or right-click) its button. The picker rewrites the hex in place and
+   leaves the rest of the wording untouched.
+   ===================================================================== */
+const HEX_RE = /#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/;
+
+const COLOR_PRESETS = [
+  ["Pure white",  "#FFFFFF"], ["Off white",    "#FCFCFA"], ["Chalk",     "#F2F0EA"],
+  ["Light grey",  "#D9D9D6"], ["Warm grey",    "#C9C4BC"], ["Beige",     "#E3DCCF"],
+  ["Sand",        "#CBB99F"], ["Mid grey",     "#9A9A97"], ["Stone grey","#757572"],
+  ["Basalt",      "#57575A"], ["Slate",        "#4A4E52"], ["Anthracite","#3A3A3D"],
+  ["Roof black",  "#3D3D3A"], ["Graphite",     "#2E2E30"], ["Near black","#1A1A1A"],
+  ["Copper",      "#A3775C"]
+];
+
+function hexOf(text){
+  const m = (text || "").match(HEX_RE);
+  if(!m) return null;
+  let h = m[0].slice(1);
+  if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return "#" + h.toUpperCase();
+}
+function replaceHex(text, hex){ return (text || "").replace(HEX_RE, hex); }
+function hasHex(id){ return HEX_RE.test(state.texts[id] || ""); }
+
+function hexToRgb(hex){
+  const h = hex.replace("#", "");
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgbToHex(r,g,b){
+  return "#" + [r,g,b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+function rgbToHsv(r,g,b){
+  r/=255; g/=255; b/=255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn;
+  let h = 0;
+  if(d){
+    if(mx === r)      h = 60 * (((g-b)/d) % 6);
+    else if(mx === g) h = 60 * ((b-r)/d + 2);
+    else              h = 60 * ((r-g)/d + 4);
+  }
+  if(h < 0) h += 360;
+  return [h, mx ? d/mx : 0, mx];
+}
+function hsvToRgb(h,s,v){
+  const c = v*s, hp = (h%360)/60, x = c*(1 - Math.abs(hp%2 - 1));
+  let r=0,g=0,b=0;
+  if(hp<1){r=c;g=x;} else if(hp<2){r=x;g=c;} else if(hp<3){g=c;b=x;}
+  else if(hp<4){g=x;b=c;} else if(hp<5){r=x;b=c;} else {r=c;b=x;}
+  const m = v - c;
+  return [(r+m)*255, (g+m)*255, (b+m)*255];
+}
+
+const CP_SIZE = 176;
+const cp = { id:null, original:null, h:0, s:0, v:1 };
+const cpEl = {
+  modal:   document.getElementById("colorModal"),
+  canvas:  document.getElementById("cpWheel"),
+  marker:  document.getElementById("cpMarker"),
+  value:   document.getElementById("cpValue"),
+  preview: document.getElementById("cpPreview"),
+  previewHex: document.getElementById("cpPreviewHex"),
+  hex:     document.getElementById("cpHex"),
+  presets: document.getElementById("cpPresets"),
+  material:document.getElementById("cpMaterial"),
+  was:     document.getElementById("cpWas"),
+  wasDot:  document.getElementById("cpWasDot"),
+  wasHex:  document.getElementById("cpWasHex")
+};
+
+function cpHex(){
+  const [r,g,b] = hsvToRgb(cp.h, cp.s, cp.v);
+  return rgbToHex(r,g,b);
+}
+
+function cpDrawWheel(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const n = Math.round(CP_SIZE * dpr);
+  if(cpEl.canvas.width !== n){ cpEl.canvas.width = n; cpEl.canvas.height = n; }
+  const ctx = cpEl.canvas.getContext("2d");
+  const img = ctx.createImageData(n, n);
+  const r = n/2, d = img.data;
+  for(let y = 0; y < n; y++){
+    for(let x = 0; x < n; x++){
+      const dx = x - r + .5, dy = y - r + .5;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const i = (y*n + x) * 4;
+      if(dist > r){ d[i+3] = 0; continue; }
+      let h = Math.atan2(dy, dx) * 180/Math.PI + 90;
+      if(h < 0) h += 360;
+      const c = hsvToRgb(h, Math.min(dist/r, 1), cp.v);
+      d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2];
+      d[i+3] = dist > r - dpr ? Math.max(0, (r - dist)/dpr) * 255 : 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function cpSyncUi(){
+  const hex = cpHex();
+  const R = CP_SIZE/2, a = (cp.h - 90) * Math.PI/180;
+  cpEl.marker.style.left = (R + Math.cos(a) * cp.s * R) + "px";
+  cpEl.marker.style.top  = (R + Math.sin(a) * cp.s * R) + "px";
+  cpEl.marker.style.background = hex;
+  cpEl.preview.style.background = hex;
+  cpEl.previewHex.textContent = hex;
+  if(document.activeElement !== cpEl.hex) cpEl.hex.value = hex;
+  cpEl.hex.classList.remove("bad");
+  cpEl.value.value = Math.round(cp.v * 100);
+  const top = rgbToHex.apply(null, hsvToRgb(cp.h, cp.s, 1));
+  cpEl.value.style.background = "linear-gradient(90deg,#000," + top + ")";
+  cpEl.presets.querySelectorAll(".cp-swatch").forEach(b => {
+    b.classList.toggle("on", b.dataset.hex === hex);
+  });
+}
+
+/* write the colour straight through to the prompt, without rebuilding the
+   sidebar or the block column on every pointer move */
+function cpApply(){
+  if(!cp.id) return;
+  const hex = cpHex();
+  state.texts[cp.id] = replaceHex(state.texts[cp.id], hex);
+  state.edited[cp.id] = state.texts[cp.id] !== defaultTextFor(cp.id);
+  const ta = document.querySelector('[data-text-for="' + cp.id + '"]');
+  if(ta) ta.value = state.texts[cp.id];
+  const dot = document.querySelector('[data-swatch-for="' + cp.id + '"]');
+  if(dot) dot.style.background = hex;
+  update();
+}
+
+function cpSet(hex, apply){
+  const [r,g,b] = hexToRgb(hex);
+  const [h,sa,v] = rgbToHsv(r,g,b);
+  // a pure grey has no hue of its own — keep the wheel where the user left it
+  if(sa > 0.001) cp.h = h;
+  cp.s = sa; cp.v = v;
+  cpDrawWheel(); cpSyncUi();
+  if(apply !== false) cpApply();
+}
+
+function openColorPicker(id, label){
+  const hex = hexOf(state.texts[id]);
+  if(!hex) return;
+  cp.id = id;
+  cp.original = state.texts[id];
+  cpEl.material.textContent = label || "";
+  cpEl.wasDot.style.background = hex;
+  cpEl.wasHex.textContent = "was " + hex;
+  cpEl.modal.hidden = false;
+  cpSet(hex, false);
+  cpEl.hex.focus();
+  cpEl.hex.select();
+}
+
+function closeColorPicker(){
+  cpEl.modal.hidden = true;
+  cp.id = null; cp.original = null;
+  buildSetup(); buildBlocks(); update();
+}
+
+/* ---- presets ---- */
+COLOR_PRESETS.forEach(([name, hex]) => {
+  const b = document.createElement("button");
+  b.className = "cp-swatch";
+  b.style.background = hex;
+  b.dataset.hex = hex;
+  b.title = name + " · " + hex;
+  b.setAttribute("aria-label", name + " " + hex);
+  b.onclick = () => cpSet(hex);
+  cpEl.presets.appendChild(b);
+});
+
+/* ---- wheel dragging ---- */
+(function(){
+  const wrap = cpEl.canvas.parentElement;
+  let down = false;
+  const pick = e => {
+    const r = cpEl.canvas.getBoundingClientRect();
+    const R = CP_SIZE/2;
+    const dx = e.clientX - r.left - R, dy = e.clientY - r.top - R;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    let h = Math.atan2(dy, dx) * 180/Math.PI + 90;
+    if(h < 0) h += 360;
+    cp.h = h; cp.s = Math.min(dist/R, 1);
+    cpSyncUi(); cpApply();
+  };
+  wrap.addEventListener("pointerdown", e => {
+    down = true; wrap.setPointerCapture(e.pointerId); pick(e);
+  });
+  wrap.addEventListener("pointermove", e => { if(down) pick(e); });
+  wrap.addEventListener("pointerup",   () => { down = false; });
+  wrap.addEventListener("pointercancel",() => { down = false; });
+})();
+
+cpEl.value.oninput = () => { cp.v = (+cpEl.value.value)/100; cpDrawWheel(); cpSyncUi(); cpApply(); };
+
+cpEl.hex.oninput = () => {
+  let v = cpEl.hex.value.trim();
+  if(v && v[0] !== "#") v = "#" + v;
+  const ok = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(v);
+  cpEl.hex.classList.toggle("bad", !ok);
+  if(ok) cpSet(hexOf(v));
+};
+
+cpEl.hex.onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); closeColorPicker(); } };
+
+// step back to the colour the material had on open, without closing
+cpEl.was.onclick = () => { const h = hexOf(cp.original); if(h) cpSet(h); };
+
+document.getElementById("cpDone").onclick  = closeColorPicker;
+document.getElementById("cpClose").onclick = closeColorPicker;
+document.getElementById("cpRevert").onclick = () => {
+  if(cp.id && cp.original !== null){
+    state.texts[cp.id] = cp.original;
+    state.edited[cp.id] = cp.original !== defaultTextFor(cp.id);
+  }
+  closeColorPicker();
+};
+cpEl.modal.addEventListener("pointerdown", e => { if(e.target === cpEl.modal) closeColorPicker(); });
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && !cpEl.modal.hidden) closeColorPicker();
+});
+
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
