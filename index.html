@@ -324,7 +324,7 @@
   .site-link{color:var(--stone);text-decoration:none;border-bottom:1px solid var(--line);transition:color .2s ease,border-color .2s ease}
   .site-link:hover,.site-link:focus-visible{color:var(--copper-bright);border-color:var(--copper-bright)}
 
-  /* ---------------- colour picker ---------------- */
+  /* ---------------- color picker ---------------- */
   [hidden]{display:none!important}
   .modal{
     position:fixed;inset:0;z-index:80;
@@ -540,7 +540,7 @@
 <div class="modal" id="colorModal" hidden>
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
     <div class="modal-head">
-      <h3 id="cpTitle">Colour</h3>
+      <h3 id="cpTitle">color</h3>
       <span class="modal-sub" id="cpMaterial"></span>
       <button class="icon-btn modal-x" id="cpClose" aria-label="Close">&times;</button>
     </div>
@@ -558,12 +558,12 @@
           <label class="eyebrow" for="cpHex">Hex</label>
           <input type="text" id="cpHex" spellcheck="false" maxlength="7">
         </div>
-        <button class="cp-was" id="cpWas" title="Back to this colour">
+        <button class="cp-was" id="cpWas" title="Back to this color">
           <i id="cpWasDot"></i><span id="cpWasHex"></span>
         </button>
         <label class="check cp-rename">
           <input type="checkbox" id="cpRename" checked>
-          <span>Update the colour word too</span>
+          <span>Update the color word too</span>
         </label>
       </div>
     </div>
@@ -767,9 +767,9 @@ const ITEM_ICONS = {
 };
 
 /* Furniture brand marks.
-   The official marks, supplied by the client, reduced to one colour: the CSS
+   The official marks, supplied by the client, reduced to one color: the CSS
    forces fill:currentColor, so each logo takes the theme's copper or stone
-   instead of its own brand colour. Any brand without an entry here falls back
+   instead of its own brand color. Any brand without an entry here falls back
    to a typographic monogram. */
 const BRAND_MARKS = {
   'Dedon': '<svg viewBox="0 0 122 26" class="brand-logo" aria-hidden="true"><path d="M56.5 1H56v4.6h.48c4.3 0 7.7 3.3 7.7 7.4s-3.5 7.4-7.7 7.4H56V25h.48C63.4 25 69 19.6 69 13.0S63.4 1 56.5 1ZM49 1h5v24h-5zM102 6.6 122 26v-6.7L102 0v6.6ZM117 1v10.2l5 4.8V1h-5ZM102 25h5V14.8L102 10v15ZM26 1h17v5H26zM26 20h17v5H26zM26 10h17v5H26zM8.5 1H8v4.6h.48c4.3 0 7.7 3.3 7.7 7.4s-3.5 7.4-7.7 7.4H8V25h.48C15.4 25 21 19.6 21 13.0S15.4 1 8.5 1ZM0 1h5v24H0zM86.5 1.1 86 1v4.7l.36.1c3.5.77 6.1 3.9 6.1 7.7s-2.6 6.9-6.1 7.7l-.36.1v4.7l.53-.09C92.5 25.0 97 19.8 97 13.5S92.5 2.0 86.5 1.1ZM72 13.5c0 6.3 4.5 11.5 10.5 12.4L83 26v-4.7l-.36-.09c-3.5-.77-6.1-3.9-6.1-7.7s2.6-6.9 6.1-7.7l.36-.09V1l-.53.1C76.5 2.0 72 7.2 72 13.5Z"/></svg>',
@@ -858,9 +858,9 @@ function initState(){
 /* =====================================================================
    SETUP COLUMN
    ===================================================================== */
-/* A custom material can carry a colour, which is what makes the long-press
+/* A custom material can carry a color, which is what makes the long-press
    picker available on it. The clause is appended so the picker's own rename
-   logic finds the colour word; removing it again only touches the clause we
+   logic finds the color word; removing it again only touches the clause we
    added, never wording the user typed themselves. */
 const CUSTOM_COLOR_HEX = "#9A9A97";
 function customColorClause(hex){ return "in a " + nameForHex(hex) + " (" + hex + ")"; }
@@ -874,7 +874,7 @@ function addCustomColor(id){
 
 function stripCustomColor(id){
   const t = state.texts[id] || "";
-  // only strip a colour clause still sitting where we put it, at the very end
+  // only strip a color clause still sitting where we put it, at the very end
   const m = t.match(/(?:^|,\s*)in an? [a-z\- ]+\(#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\)\s*$/);
   if(m) state.texts[id] = t.slice(0, m.index).replace(/[,;\s]*$/, "");
 }
@@ -1033,16 +1033,16 @@ function buildSetup(){
       const grid = document.createElement("div");
       grid.className = "opt-grid";
       s.items.forEach(i => {
-        const colour = hexOf(state.texts[i.id]);
+        const color = hexOf(state.texts[i.id]);
         grid.appendChild(optionButton({
           mark:  ITEM_ICONS[i.id] || ITEM_ICONS._default,
           label: i.label,
           on:    !!state.checked[i.id],
-          title: colour ? i.label + " · " + colour + " — long-press or right-click to change the colour"
+          title: color ? i.label + " · " + color + " — long-press or right-click to change the color"
                         : i.label,
-          swatch: colour,
+          swatch: color,
           swatchFor: i.id,
-          onLongPress: colour ? () => openColorPicker(i.id, i.label) : null,
+          onLongPress: color ? () => openColorPicker(i.id, i.label) : null,
           onClick: () => {
             state.checked[i.id] = !state.checked[i.id];
             buildSetup(); buildBlocks(); update();
@@ -1055,7 +1055,7 @@ function buildSetup(){
           label: c.label,
           on:    !!state.checked[c.id],
           title: hexOf(state.texts[c.id])
-                   ? (c.label || "Custom material") + " · long-press to change the colour"
+                   ? (c.label || "Custom material") + " · long-press to change the color"
                    : (c.label || "Custom material"),
           swatch: hexOf(state.texts[c.id]),
           swatchFor: c.id,
@@ -1114,7 +1114,7 @@ function buildSetup(){
 
       const colLab = document.createElement("label");
       colLab.className = "check add-color";
-      colLab.title = "Give custom materials a colour, so a long press opens the picker on them";
+      colLab.title = "Give custom materials a color, so a long press opens the picker on them";
       const colCb = document.createElement("input");
       colCb.type = "checkbox";
       colCb.checked = !!state.customColor;
@@ -1125,7 +1125,7 @@ function buildSetup(){
         buildSetup(); buildBlocks(); update();
       };
       const colSpan = document.createElement("span");
-      colSpan.textContent = "colour";
+      colSpan.textContent = "color";
       colLab.appendChild(colCb); colLab.appendChild(colSpan);
 
       addRow.appendChild(add); addRow.appendChild(colLab);
@@ -1390,8 +1390,8 @@ function update(){
    ===================================================================== */
 
 /* =====================================================================
-   COLOUR PICKER
-   Any material whose text carries a hex code can be recoloured: long-press
+   color PICKER
+   Any material whose text carries a hex code can be recolored: long-press
    (or right-click) its button. The picker rewrites the hex in place and
    leaves the rest of the wording untouched.
    ===================================================================== */
@@ -1406,7 +1406,7 @@ const COLOR_PRESETS = [
   ["Copper",      "#A3775C"]
 ];
 
-/* Some materials only ever come in a handful of colours, so they get their
+/* Some materials only ever come in a handful of colors, so they get their
    own preset row instead of the general palette. */
 const MATERIAL_PRESETS = {
   "roof-tiles": [["Anthracite","#3D3D3A"], ["Brown","#45342C"], ["Red","#CE846B"]]
@@ -1452,10 +1452,10 @@ function hsvToRgb(h,s,v){
 
 
 /* ---------------------------------------------------------------------
-   Colour names. Changing a colour also rewrites the colour word in the
+   color names. Changing a color also rewrites the color word in the
    wording, so "in a white (#FCFCFA)" becomes "in a light beige (#E3DCCF)".
    The nearest name is found in CIE Lab, which matches how the eye groups
-   colours far better than raw RGB distance.
+   colors far better than raw RGB distance.
    --------------------------------------------------------------------- */
 const COLOR_NAMES = [
   ["white","#FFFFFF"],        ["off-white","#FAF9F5"],   ["chalk white","#F2F0EA"],
@@ -1474,7 +1474,7 @@ const COLOR_NAMES = [
 
 /* Phrases that may already sit in a description, most specific first. The
    bare intensity words are a deliberate last resort, so "dark" is only
-   treated as the colour when nothing better is present. */
+   treated as the color when nothing better is present. */
 const COLOR_WORDS = [
   "dark anthracite","light anthracite","graphite grey","graphite gray",
   "basalt grey","basalt gray","slate grey","slate gray","stone grey","stone gray",
@@ -1512,8 +1512,8 @@ function nameForHex(hex){
   return best;
 }
 
-/* swap the colour word nearest the hex code for `newName`, leaving the rest
-   of the sentence alone; returns the text unchanged if no colour word is found */
+/* swap the color word nearest the hex code for `newName`, leaving the rest
+   of the sentence alone; returns the text unchanged if no color word is found */
 function renameColorWord(text, newName){
   const hexPos = text.search(HEX_RE);
   for(const w of COLOR_WORDS){
@@ -1536,10 +1536,10 @@ function renameColorWord(text, newName){
 
 /* ---------------------------------------------------------------------
    RAL / NCS / KEIM entry.
-   All three are physical colour systems defined by printed or painted
+   All three are physical color systems defined by printed or painted
    samples, so any conversion to sRGB is an approximation — published
    tables disagree in the last few percent. Treat the results as a
-   starting point, not as colour-managed values.
+   starting point, not as color-managed values.
    --------------------------------------------------------------------- */
 
 /* RAL Classic, architectural range: the greys, whites, browns and the
@@ -1718,7 +1718,7 @@ function cpSyncUi(){
   cpEl.value.value = Math.round(cp.v * 100);
   const top = rgbToHex.apply(null, hsvToRgb(cp.h, cp.s, 1));
   cpEl.value.style.background = "linear-gradient(90deg,#000," + top + ")";
-  // a code field only keeps its text while it is the source of the colour;
+  // a code field only keeps its text while it is the source of the color;
   // RAL gets a reverse lookup so an exact match shows its code
   ["ral","ncs","keim"].forEach(k => {
     const el = cpEl[k];
@@ -1731,7 +1731,7 @@ function cpSyncUi(){
   });
 }
 
-/* write the colour straight through to the prompt, without rebuilding the
+/* write the color straight through to the prompt, without rebuilding the
    sidebar or the block column on every pointer move */
 function cpApply(){
   if(!cp.id) return;
@@ -1858,7 +1858,7 @@ cpEl.hex.oninput = () => {
 
 cpEl.hex.onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); closeColorPicker(); } };
 
-// step back to the colour the material had on open, without closing
+// step back to the color the material had on open, without closing
 cpEl.was.onclick = () => { const h = hexOf(cp.original); if(h) cpSet(h); };
 
 document.getElementById("cpDone").onclick  = closeColorPicker;
