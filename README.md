@@ -116,6 +116,28 @@ Edits made in the browser are session-only by design — the file on disk stays 
 source of truth, and **Save setup** captures anything worth keeping. Use **Reset** on a
 block, or **Reset all texts to defaults**, to go back.
 
+## Colour codes
+
+Long-press (or right-click) any material whose text carries a hex code to open the
+colour picker: wheel plus brightness, 16 presets, a hex field, and RAL / NCS / Keim
+entry. Picking a colour rewrites the hex **and** the colour word, so
+`in a white (#FCFCFA)` becomes `in a beige (#EADEBD)` — the checkbox in the picker
+turns that off for a one-off.
+
+| System | Source |
+| --- | --- |
+| RAL | ~70 RAL Classic codes across the architectural range, inline in `index.html` |
+| NCS | parsed from the notation (`S 2005-Y20R`, `1050-Y`, `0500-N`), so any code works |
+| Keim | `keim-colors.js` — 294 colours from the KEIMFARBEN EXCLUSIV and KEIM AVANTGARDE lists |
+
+All three are physical colour systems defined by printed or painted samples, so every
+sRGB value here is an approximation — fine for steering a render, not colour-managed.
+
+Keim codes default to EXCLUSIV; prefix with `A` or `AV` for AVANTGARDE (both number
+colours 9001–9021), and append `soldalit` for that binder's reading of an AVANTGARDE
+monochrome tone. If `keim-colors.js` is missing the field says so rather than failing
+silently.
+
 ## Development
 
 No build step and no dependencies. Open `index.html` in a browser, or serve it:
